@@ -2,10 +2,6 @@
 
 A demo project using the **Limx Tron1 Robot** with **Artefacts**, **ROS 2**, and **Gazebo**.
 
-This repository was originally cloned from
-[limxdynamics/tron1-gazebo-ros2 (feature/humble branch)](https://github.com/limxdynamics/tron1-gazebo-ros2)
-and extended to provide a **unified, automated setup** for quick installation, configuration, and rebuilding of the entire workspace.
-
 ---
 
 ## Overview
