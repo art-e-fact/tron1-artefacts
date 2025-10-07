@@ -19,6 +19,20 @@ For installation, please follow the official guide below and select **`ros-jazzy
 
 [ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debians.html)
 
+### Install fundamental dependencies
+```bash
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt install python3-pip python3-doit git
+doit tabcompletion > bash_completion_doit.bash
+source bash_completion_doit.bash
+```
+
+###  Clone the repository (preferably into ~/tron_artefacts_ws)
+```bash
+git clone https://github.com/art-e-fact/tron1-artefacts.git ~/tron_artefacts_ws
+```
+
 ---
 
 ## 2. Using the Unified Installer
@@ -27,6 +41,7 @@ Once ROS 2 and system prerequisites are installed, this workspace manages everyt
 
 ### Full installation (recommended on first run)
 ```bash
+cd ~/tron_artefacts_ws
 doit setup
 ```
 > Installs dependencies, creates the virtual environment, sets up ROS 2 packages, and builds the workspace.
@@ -34,6 +49,7 @@ doit setup
 
 ### Rebuild the workspace
 ```bash
+cd ~/tron_artefacts_ws
 doit build
 ```
 > Rebuilds all packages in the workspace using `colcon`.
@@ -41,6 +57,7 @@ doit build
 
 ### Update repositories
 ```bash
+cd ~/tron_artefacts_ws
 doit download
 ```
 > Pulls, fetches, and updates all repositories defined in `tron_artefacts.repos` (via `vcstool`).
@@ -48,6 +65,7 @@ doit download
 
 ### Full rebuild cycle
 ```bash
+cd ~/tron_artefacts_ws
 doit clean
 doit setup
 ```
@@ -80,14 +98,14 @@ doit setup
 - Run the simulation: You can set the use_support parameter of the empty_world.launch.py file to true, and execute the following Shell command to run the simulation:
 
   ```bash
-  source install/setup.bash
+  source ~/tron_artefacts_ws/install/setup.bash
   ros2 launch pointfoot_gazebo empty_world.launch.py
   ```
 
 - Run the control routine to ensure that the robot in the simulator is moving, indicating that the simulation environment has been successfully set up:
 
   ```bash
-  source install/setup.bash
+  source ~/tron_artefacts_ws/install/setup.bash
   ros2 run limxsdk_python example
   ```
 
