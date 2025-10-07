@@ -1,0 +1,18 @@
+# tron_artefacts.repos
+repositories:
+  limxsdk_python:
+    type: git
+    url: https://github.com/art-e-fact/tron1-artefacts-lowlevel.git
+    version: main
+  robot-description:
+    type: git
+    url: https://github.com/art-e-fact/tron1-artefacts-description.git
+    version: main
+  robot-visualization:
+    type: git
+    url: https://github.com/limxdynamics/robot-visualization.git
+    version: master
+  robot-gazebo:
+    type: git
+    url: https://github.com/art-e-fact/tron1-artefacts-demo.git
+    version: harmonic

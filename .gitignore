@@ -1,0 +1,9 @@
+.doit.db
+Session.vim
+__pycache__/
+build/
+install/
+log/
+src/
+stamps/
+venv/
