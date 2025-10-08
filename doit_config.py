@@ -1,8 +1,28 @@
 # doit_config.py
+import os
 from glob import glob
 from typing import List
+
 from doit import get_var
-import os
+
+REPOS_TEMPLATE = {
+    "limxsdk_python": {
+        "url": "https://github.com/art-e-fact/tron1-artefacts-lowlevel.git",
+        "versions": {"jazzy": "main", "humble": "main"},
+    },
+    "robot-description": {
+        "url": "https://github.com/art-e-fact/tron1-artefacts-description.git",
+        "versions": {"jazzy": "main", "humble": "main"},
+    },
+    "robot-visualization": {
+        "url": "https://github.com/limxdynamics/robot-visualization.git",
+        "versions": {"jazzy": "master", "humble": "master"},
+    },
+    "robot-gazebo": {
+        "url": "https://github.com/art-e-fact/tron1-artefacts-demo.git",
+        "versions": {"jazzy": "harmonic", "humble": "ignition"},
+    },
+}
 
 OVERIDE_CONFIG = {
     # 'venv=y' -> use python venv (default y on jazzy, n on humble)
@@ -52,7 +72,7 @@ if ros == "jazzy":
     }
 elif ros == "humble":
     default_values = {
-        "venv": "n",
+        "venv": "y",
         "syml": "y",
         "low_mem": "n",
         "pipforce": "n",

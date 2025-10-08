@@ -24,10 +24,11 @@ from typing import Callable, Dict, List, Sequence, Set, Union
 from doit.task import clean_targets
 from doit.tools import Interactive, check_timestamp_unchanged
 
-from doit_config import config, get_ros_distro, ros
+from doit_config import REPOS_TEMPLATE, config, get_ros_distro, ros
 
 here = path.abspath("./")
 stamps = path.abspath("./stamps")
+RENDERED_REPOS = f"{stamps}/tron_artefacts.{ros}.repos"
 
 REPOS_FILE = path.abspath(config["repos"])  # default ./tron_artefacts.repos
 REQ_FILE = path.abspath("requirements.txt")  # requirements live in workspace root
@@ -73,6 +74,23 @@ def _require_repos():
             f".repos file not found: {REPOS_FILE}\n"
             "Set it via CLI:  doit repos=/abs/or/relative/file.repos"
         )
+
+
+def _render_repos_file(out_path: str):
+    """Render a distro-specific .repos file without requiring PyYAML."""
+    lines = ["repositories:"]
+    for name, spec in REPOS_TEMPLATE.items():
+        url = spec["url"]
+        version = spec["versions"][ros]
+        lines += [
+            f"  {name}:",
+            f"    type: git",
+            f"    url: {url}",
+            f"    version: {version}",
+        ]
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w") as f:
+        f.write("\n".join(lines) + "\n")
 
 
 @dataclass
@@ -198,6 +216,20 @@ def task_tools():
     }
 
 
+def task_repos_render():
+    """Render a distro-specific .repos file (per current ROS: {ros})."""
+
+    def render():
+        _render_repos_file(RENDERED_REPOS)
+
+    return {
+        "actions": [render],
+        "targets": [RENDERED_REPOS],
+        "file_dep": ["doit_config.py", "dodo.py"],
+        "verbosity": 2,
+    }
+
+
 def task_workspace():
     """Create src/ and import/pull repos with vcstool."""
     yield {"name": None, "actions": None, "doc": "Creates src/ and imports repos."}
@@ -218,12 +250,18 @@ def task_workspace():
     yield {
         "name": "vcs-import",
         "actions": [
-            lambda: _require_repos(),
-            f"cd {here} && vcs import src < {REPOS_FILE} || true",
+            f"cd {here} && vcs import src < {RENDERED_REPOS} || true",
             f"bash -lc \"echo 'stamp: {time()}' > {stamps}/.vcs_import.stamp\"",
         ],
-        "task_dep": ["workspace:mkdir-src", "workspace:mkdir-stamp", "tools:apt"],
+        "task_dep": [
+            "workspace:mkdir-src",
+            "workspace:mkdir-stamp",
+            "tools:apt",
+            "repos_render",
+        ],
+        "file_dep": [RENDERED_REPOS],
         "targets": [f"{stamps}/.vcs_import.stamp"],
+        "uptodate": [os.path.exists(f"{stamps}/.vcs_import.stamp")],
         "verbosity": 2,
         "clean": True,
     }
@@ -282,6 +320,7 @@ def task_pydep():
             f"bash -lc \"echo 'stamp: {time()}' > {tar}\"",
         ],
         "file_dep": is_pip_usable if use_venv else [],
+        "task_dep": ["workspace:vcs-import"],
         "targets": [tar],
         "clean": True,
         "verbosity": 2,
@@ -299,11 +338,12 @@ def task_rosdep():
             "libgz-sim8",
             "libgz-transport13",
             "libgz-msgs10",
+            "gz-harmonic",
             "ros-jazzy-ros-gz",
             "ros-jazzy-gz-ros2-control",
         ]
         if ros == "jazzy"
-        else []
+        else ["ignition-fortress", "ros-humble-ros-ign", "ros-humble-gz-ros2-control"]
     )
     missing_rosdep += missing_specific
 
@@ -316,24 +356,23 @@ def task_rosdep():
         "verbosity": 2,
     }
 
-    if ros == "jazzy":
-        gazebo_list = "/etc/apt/sources.list.d/gazebo-stable.list"
-        yield {
-            "name": "gazebo_repo",
-            "actions": [
-                Interactive(
-                    r"""sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list'"""
-                ),
-                Interactive(
-                    "wget -qO - http://packages.osrfoundation.org/gazebo.key | sudo apt-key add -"
-                ),
-                Interactive("sudo apt-get update"),
-            ],
-            "uptodate": [path.exists(gazebo_list)],
-            "verbosity": 2,
-            "doc": "Adds OSRF Gazebo apt repository for gz* packages (Jazzy).",
-            "task_dep": ["rosdep:available"],
-        }
+    gazebo_list = "/etc/apt/sources.list.d/gazebo-stable.list"
+    yield {
+        "name": "gazebo_repo",
+        "actions": [
+            Interactive(
+                r"""sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list'"""
+            ),
+            Interactive(
+                "wget -qO - http://packages.osrfoundation.org/gazebo.key | sudo apt-key add -"
+            ),
+            Interactive("sudo apt-get update"),
+        ],
+        "uptodate": [path.exists(gazebo_list)],
+        "verbosity": 2,
+        "doc": "Adds OSRF Gazebo apt repository for gz and ign packages.",
+        "task_dep": ["rosdep:available"],
+    }
 
     yield {
         "name": "init",
@@ -344,15 +383,12 @@ def task_rosdep():
     }
 
     for apt_pkg in missing_rosdep:
-        deps = ["rosdep:available"]
-        if ros == "jazzy":
-            deps.append("rosdep:gazebo_repo")
         yield {
             "name": apt_pkg,
             "actions": [f"{ros_src_cmd}sudo apt install -y {apt_pkg}"],
             "verbosity": 2,
             "uptodate": [f"dpkg -s {apt_pkg}"],
-            "task_dep": deps,
+            "task_dep": ["rosdep:available", "rosdep:gazebo_repo"],
         }
 
     yield {
