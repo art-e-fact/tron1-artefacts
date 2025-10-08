@@ -7,17 +7,24 @@ A demo project using the **Limx Tron1 Robot** with **Artefacts**, **ROS 2**, and
 ## Overview
 
 This workspace serves as a **unified installer** for the Tron1 simulation and development environment.
-It automates everything — from dependency installation and virtual environment setup, to pulling repositories and building the entire ROS 2 workspace — using a single command interface powered by [`doit`](https://pydoit.org/).
+It automates everything, from dependency installation and virtual environment setup, to pulling repositories and building the entire ROS 2 workspace, using a single command interface powered by [`doit`](https://pydoit.org/).
+It supports both **ROS 2 Humble** and **ROS 2 Jazzy**, automatically detecting your installed distribution and configuring everything accordingly:
+
+- **Humble**: Installs and configures **Ignition Fortress**
+- **Jazzy**: Installs and configures **Gazebo Harmonic**
+
+This allows the same installer to seamlessly handle both ecosystems with no manual changes required.
+
 
 ---
 
 ## 1. Set Up the Development Environment
 
-### Install ROS 2 Jazzy
-Set up a ROS 2 **Jazzy**–based development environment on **Ubuntu 24.04**.
-For installation, please follow the official guide below and select **`ros-jazzy-desktop`**:
+### Install ROS 2 Jazzy or Humble
+For installation, please follow the official guides below and select **`ros-{ROS_DISTRO}-desktop`**:
 
-[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debians.html)
+[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
+[ROS 2 Humble Installation on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
 ### Install fundamental dependencies
 ```bash
@@ -60,7 +67,7 @@ doit build
 cd ~/tron_artefacts_ws
 doit download
 ```
-> Pulls, fetches, and updates all repositories defined in `tron_artefacts.repos` (via `vcstool`).
+> Pulls, fetches, and updates all repositories defined in the runtime rendered .repos file (depending on the ROS distro). (via `vcstool`).
 
 
 ### Full rebuild cycle
