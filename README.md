@@ -31,13 +31,14 @@ For installation, please follow the official guides below and select **`ros-{ROS
 sudo apt-get update
 sudo apt-get upgrade
 sudo apt install python3-pip python3-doit git
-doit tabcompletion > bash_completion_doit.bash
-source bash_completion_doit.bash
 ```
 
 ###  Clone the repository (preferably into ~/tron_artefacts_ws)
 ```bash
 git clone https://github.com/art-e-fact/tron1-artefacts.git ~/tron_artefacts_ws
+cd ~/tron_artefacts_ws
+doit tabcompletion > bash_completion_doit.bash
+source bash_completion_doit.bash
 ```
 
 ---
