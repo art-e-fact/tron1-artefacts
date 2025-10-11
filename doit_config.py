@@ -30,6 +30,14 @@ REPO_SPECS = {
         "url": "https://github.com/art-e-fact/tron1-artefacts-demo.git",
         "versions": {"jazzy": "harmonic_lighting_fix", "humble": "humble"},
     },
+    "rl-deploy-python": {
+        "url": "https://github.com/art-e-fact/tron1-rl-deploy-artefacts.git",
+        "versions": {"jazzy": "main", "humble": "main"},
+    },
+    "robot-joystick": {
+        "url": "https://github.com/limxdynamics/robot-joystick.git",
+        "versions": {"jazzy": "main", "humble": "main"},
+    },
 }
 OVERIDE_CONFIG = {
     # 'venv=y' -> use python venv (default y on jazzy, n on humble)
