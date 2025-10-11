@@ -1,9 +1,9 @@
 """
 Tron workspace automation with doit.
 
-- Installs tools (vcstool, rosdep, colcon, venv helpers)
-- Creates src/, imports & pulls repos (vcs)
-- Sets up Python venv (optional; default on Jazzy)
+- Installs tools (rosdep, colcon, venv helpers)
+- Creates src/, imports & pulls repos
+- Sets up Python venv
 - Installs Python deps from ./requirements.txt
 - rosdep init/update/install
 - Per-package colcon build with incremental targets
@@ -24,13 +24,18 @@ from typing import Callable, Dict, List, Sequence, Set, Union
 from doit.task import clean_targets
 from doit.tools import Interactive, check_timestamp_unchanged
 
-from doit_config import REPOS_TEMPLATE, config, get_ros_distro, ros
+from doit_config import (
+    PATH,
+    config,
+    get_files,
+    get_ros_distro,
+    ros2,
+    tron_git_repos_for_ros,
+)
 
 here = path.abspath("./")
 stamps = path.abspath("./stamps")
-RENDERED_REPOS = f"{stamps}/tron_artefacts.{ros}.repos"
 
-REPOS_FILE = path.abspath(config["repos"])  # default ./tron_artefacts.repos
 REQ_FILE = path.abspath("requirements.txt")  # requirements live in workspace root
 
 pip_args: str = (config["pip_args"] or "").strip()
@@ -50,7 +55,7 @@ colcon_args: str = (config["colcon_args"] or "") + " --cmake-args -Wno-dev "
 if config["syml"]:
     colcon_args += "--symlink-install "
 
-ros_src_cmd = f". /opt/ros/{ros}/setup.sh && "
+ros_src_cmd = f". /opt/ros/{ros2}/setup.sh && "
 
 use_venv: bool = config["venv"]
 VENV_READY_TRG = f"{here}/venv/COLCON_IGNORE"
@@ -66,31 +71,6 @@ def remove_dir(dirs: List[str]) -> List[Callable]:
         if path.exists(d):
             out.append(lambda x=d: shutil.rmtree(x) if path.exists(x) else None)
     return out
-
-
-def _require_repos():
-    if not path.isfile(REPOS_FILE):
-        raise RuntimeError(
-            f".repos file not found: {REPOS_FILE}\n"
-            "Set it via CLI:  doit repos=/abs/or/relative/file.repos"
-        )
-
-
-def _render_repos_file(out_path: str):
-    """Render a distro-specific .repos file without requiring PyYAML."""
-    lines = ["repositories:"]
-    for name, spec in REPOS_TEMPLATE.items():
-        url = spec["url"]
-        version = spec["versions"][ros]
-        lines += [
-            f"  {name}:",
-            f"    type: git",
-            f"    url: {url}",
-            f"    version: {version}",
-        ]
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w") as f:
-        f.write("\n".join(lines) + "\n")
 
 
 @dataclass
@@ -159,7 +139,6 @@ IGNORED_DIR_NAMES = {"lib", "install", "build", ".git", ".venv", "venv"}
 
 
 def _is_ignored_tree(p: Path) -> bool:
-    # Skip if any ancestor (from src/ down) is an install-like folder
     for part in p.parts:
         if part in IGNORED_DIR_NAMES:
             return True
@@ -167,7 +146,6 @@ def _is_ignored_tree(p: Path) -> bool:
 
 
 def _looks_like_real_pkg(pkg_dir: Path) -> bool:
-    # Heuristic: must have ament build file next to package.xml
     return any(
         (pkg_dir / name).exists()
         for name in ("CMakeLists.txt", "setup.py", "pyproject.toml")
@@ -178,7 +156,6 @@ def packages(root: str) -> Dict[str, RosPackage]:
     pk_dict: Dict[str, RosPackage] = {}
     for px in glob(f"{root}/**/package.xml", recursive=True):
         pkg_dir = Path(px).parent.resolve()
-        # ignore vendor/install artifacts
         if _is_ignored_tree(pkg_dir.relative_to(Path(root).resolve())):
             continue
         if not _looks_like_real_pkg(pkg_dir):
@@ -198,7 +175,7 @@ src_pkg = packages("src")
 
 
 def task_tools():
-    """Install workspace tools: vcstool, colcon, rosdep, venv helpers."""
+    """Install workspace tools: colcon, rosdep, venv helpers."""
     yield {"name": None, "actions": None, "doc": "Installs apt-based tooling."}
     yield {
         "name": "apt",
@@ -206,33 +183,19 @@ def task_tools():
             Interactive("sudo apt update"),
             Interactive(
                 "sudo apt install -y "
-                "python3-vcstool python3-colcon-common-extensions "
+                "python3-colcon-common-extensions "
                 "python3-rosdep git build-essential curl "
                 "python3-venv python3-virtualenv "
             ),
         ],
-        "uptodate": ["vcs --help", "colcon --help", "rosdep --help"],
-        "verbosity": 2,
-    }
-
-
-def task_repos_render():
-    """Render a distro-specific .repos file (per current ROS: {ros})."""
-
-    def render():
-        _render_repos_file(RENDERED_REPOS)
-
-    return {
-        "actions": [render],
-        "targets": [RENDERED_REPOS],
-        "file_dep": ["doit_config.py", "dodo.py"],
+        "uptodate": ["colcon --help", "rosdep --help"],
         "verbosity": 2,
     }
 
 
 def task_workspace():
-    """Create src/ and import/pull repos with vcstool."""
-    yield {"name": None, "actions": None, "doc": "Creates src/ and imports repos."}
+    """Create src/ and stamps/."""
+    yield {"name": None, "actions": None, "doc": "Creates src/ and stamps/."}
     yield {
         "name": "mkdir-stamp",
         "actions": [f"mkdir -p {here}/stamps"],
@@ -247,35 +210,37 @@ def task_workspace():
         "uptodate": [path.isdir(f"{here}/src")],
         "verbosity": 2,
     }
+
+
+def task_download():
+    """Clone/pull all repos into src/."""
     yield {
-        "name": "vcs-import",
-        "actions": [
-            f"cd {here} && vcs import src < {RENDERED_REPOS} || true",
-            f"bash -lc \"echo 'stamp: {time()}' > {stamps}/.vcs_import.stamp\"",
-        ],
-        "task_dep": [
-            "workspace:mkdir-src",
-            "workspace:mkdir-stamp",
-            "tools:apt",
-            "repos_render",
-        ],
-        "file_dep": [RENDERED_REPOS],
-        "targets": [f"{stamps}/.vcs_import.stamp"],
-        "uptodate": [os.path.exists(f"{stamps}/.vcs_import.stamp")],
-        "verbosity": 2,
-        "clean": True,
+        "name": None,
+        "actions": None,
+        "doc": "Downloads and updates repositories into src/.",
     }
-    yield {
-        "name": "vcs-pull",
-        "actions": [
-            f"cd {here} && vcs pull src || true",
-            f"bash -lc \"echo 'stamp: {time()}' > {stamps}/.vcs_pull.stamp\"",
-        ],
-        "task_dep": ["workspace:vcs-import"],
-        "targets": [f"{stamps}/.vcs_pull.stamp"],
-        "verbosity": 2,
-        "clean": True,
-    }
+
+    for repo in tron_git_repos_for_ros():
+        yield {
+            "name": f"{repo.location}:clone",
+            "actions": [
+                Interactive(
+                    f"git clone {repo.link} {repo.src_dir} -b {repo.branch} || true"
+                )
+            ],
+            "uptodate": [os.path.exists(repo.src_dir)],
+            "verbosity": 2,
+        }
+        yield {
+            "name": f"{repo.location}:pull",
+            "actions": [
+                f"bash -lc 'cd {repo.src_dir} && git fetch --all --tags && "
+                f"git checkout {repo.branch} && git pull --ff-only || true'"
+            ],
+            "task_dep": [f"download:{repo.location}:clone"],
+            "uptodate": repo.uptodate,
+            "verbosity": 2,
+        }
 
 
 def task_python_venv():
@@ -320,7 +285,7 @@ def task_pydep():
             f"bash -lc \"echo 'stamp: {time()}' > {tar}\"",
         ],
         "file_dep": is_pip_usable if use_venv else [],
-        "task_dep": ["workspace:vcs-import"],
+        "task_dep": ["download"],
         "targets": [tar],
         "clean": True,
         "verbosity": 2,
@@ -342,7 +307,7 @@ def task_rosdep():
             "ros-jazzy-ros-gz",
             "ros-jazzy-gz-ros2-control",
         ]
-        if ros == "jazzy"
+        if ros2 == "jazzy"
         else ["ignition-fortress", "ros-humble-ros-ign", "ros-humble-gz-ros2-control"]
     )
     missing_rosdep += missing_specific
@@ -393,7 +358,7 @@ def task_rosdep():
 
     yield {
         "name": "update",
-        "actions": [f"{ros_src_cmd}rosdep update --rosdistro {ros}"],
+        "actions": [f"{ros_src_cmd}rosdep update --rosdistro {ros2}"],
         "verbosity": 2,
         "task_dep": ["rosdep:init"],
         "uptodate": [check],
@@ -458,22 +423,11 @@ def task_setup():
         "actions": None,
         "task_dep": [
             "tools:apt",
-            "workspace:vcs-import",
-            "workspace:vcs-pull",
+            "download",
             "python_venv:create-venv",
             "pydep",
             "rosdep:install",
             "build",
         ],
         "doc": "End-to-end setup & build.",
-    }
-
-
-def task_download():
-    return {
-        "actions": None,
-        "task_dep": [
-            "workspace:vcs-import",
-            "workspace:vcs-pull",
-        ],
     }
