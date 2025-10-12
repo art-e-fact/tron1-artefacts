@@ -1,4 +1,5 @@
 .doit.db
+bash_completion_doit.bash
 Session.vim
 __pycache__/
 build/
