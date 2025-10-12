@@ -23,7 +23,7 @@ This allows the same installer to seamlessly handle both ecosystems with no manu
 ### Install ROS 2 Jazzy or Humble
 For installation, please follow the official guides below and select **`ros-{ROS_DISTRO}-desktop`**:
 
-[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
+[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)  
 [ROS 2 Humble Installation on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
 ### Install fundamental dependencies
