@@ -52,6 +52,7 @@ def test_move_forward(demo: GoToDemo):
 
     d_yaw = abs(((yaw1 - yaw0 + math.pi) % (2 * math.pi)) - math.pi)
     assert d_yaw <= math.radians(15), f"Yaw drift too large: {math.degrees(d_yaw):.1f}°"
+    time.sleep(0.2)
 
 
 def test_move_face_turn(demo: GoToDemo):
@@ -65,6 +66,7 @@ def test_move_face_turn(demo: GoToDemo):
     d_yaw = ((yaw1 - yaw0 + math.pi) % (2 * math.pi)) - math.pi
     err = abs(d_yaw - math.pi / 2.0)
     assert err <= math.radians(10), f"Yaw error {math.degrees(err):.1f}° too large"
+    time.sleep(0.2)
 
 
 def test_move_face_forward_with_hold_timeout(demo: GoToDemo):
