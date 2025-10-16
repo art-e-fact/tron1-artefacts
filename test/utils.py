@@ -192,6 +192,7 @@ def pointfoot(test_report_dir):
             "launch",
             "pointfoot_gazebo",
             "empty_world.launch.py",
+            "server:=true",
         ],
         stdout=stdout_file,
         stderr=stderr_file,
