@@ -124,7 +124,42 @@ def manual_gs_bridge(test_report_dir):
             "run",
             "ros_gz_bridge",
             "parameter_bridge",
-            # "topic",
+            "/pointfoot/fpv/image@sensor_msgs/msg/Image@gz.msgs.Image",
+            "/pointfoot/bird/image@sensor_msgs/msg/Image@gz.msgs.Image",
+            "/pointfoot/fpv/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
+            "/pointfoot/bird/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
+        ],
+        stdout=stdout_file,
+        stderr=stderr_file,
+        preexec_fn=os.setsid,  # create a new process group/session
+    )
+    logger.debug(f"{prefix}process launching [{p.args}]")
+    logger.debug(f"{prefix}tests starting")
+    yield p
+    prefix = f"SHUTDOWN [{p_name}]: "
+    logger.debug(f"{prefix}processes stopping")
+    with ignore_int():
+        finish_process(p)
+    logger.debug(f"{prefix}processes stopped")
+    logger.debug(f"{prefix}files closing {report_abs}")
+    stdout_file.close()
+    stderr_file.close()
+    logger.debug(f"{prefix}files closed")
+    logger.debug(f"{prefix}finished")
+
+
+def sdk_bridge(module_report_dir):
+    p_name = "sdk_bridge"
+    prefix = f"STARTUP [{p_name}]: "
+    report_abs = module_report_dir
+    stdout_file = open(f"{report_abs}/sdk_bridge_stdout.txt", "wb")
+    stderr_file = open(f"{report_abs}/sdk_bridge_stderr.txt", "wb")
+    p = subprocess.Popen(
+        [
+            "ros2",
+            "run",
+            "limxsdk_python",
+            "pointfoot_sdk_bridge",
         ],
         stdout=stdout_file,
         stderr=stderr_file,
