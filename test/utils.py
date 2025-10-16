@@ -251,6 +251,7 @@ def bag_recorder(topic_names: List[str], directory="rosbags", use_sim_time=False
 
     yyyymmddhhmmss = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
     rosbag_filepath = directory + "/rosbag2_" + yyyymmddhhmmss
+    # rosbag_filepath = directory
     logger.info(f"Rosbag path: {rosbag_filepath}")
     rosbag_cmd = (
         ["ros2", "bag", "record"]

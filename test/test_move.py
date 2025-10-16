@@ -30,7 +30,6 @@ def record_bag(test_report_dir, pointfoot, gz_bridge, sdk_bridge):
             "/joint_states",
         ],
         directory=bag_dir,
-        use_sim_time=True,
     )
     vid_gen = utils.bag_recorder(
         [
@@ -40,6 +39,7 @@ def record_bag(test_report_dir, pointfoot, gz_bridge, sdk_bridge):
             "/pointfoot/bird/camera_info",
         ],
         directory=vid_dir,
+        # use_sim_time=True,
     )
     proc, bag_path = next(bag_gen)
     proc2, vid_path = next(vid_gen)
@@ -73,9 +73,9 @@ def pointfoot(test_report_dir: str):
     yield from utils.pointfoot(test_report_dir)
 
 
-@pytest.fixture(scope="module", autouse=True)
-def gz_bridge(module_report_dir, pointfoot):
-    yield from utils.manual_gs_bridge(module_report_dir)
+@pytest.fixture(scope="function", autouse=True)
+def gz_bridge(test_report_dir, pointfoot):
+    yield from utils.manual_gs_bridge(test_report_dir)
 
 
 @pytest.fixture(scope="module", autouse=True)
