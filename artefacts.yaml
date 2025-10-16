@@ -1,0 +1,26 @@
+project: tron1-artefacts/tron1-artefacts
+version: 0.1.0
+
+jobs:
+  move: 
+    type: test
+    runtime:
+      framework: ros2:jazzy
+      simulator: gazebo:harmonic
+    scenarios:
+      defaults: {}
+      settings:
+        - name: move
+          pytest_file: test/test_move.py
+          output_dirs: 
+                - test_report/latest
+                - test_report/latest/conftest
+                - test_report/latest/test_move_forward
+                - test_report/latest/test_move_forward/bag
+                - test_report/latest/test_move_forward/video
+                - test_report/latest/test_move_face_turn
+                - test_report/latest/test_move_face_turn/bag
+                - test_report/latest/test_move_face_turn/video
+                - test_report/latest/test_move_face_forward_with_hold_timeout
+                - test_report/latest/test_move_face_forward_with_hold_timeout/bag
+                - test_report/latest/test_move_face_forward_with_hold_timeout/video
