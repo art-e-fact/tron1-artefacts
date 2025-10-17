@@ -20,7 +20,7 @@ REPO_SPECS = {
     },
     "robot-description": {
         "url": "https://github.com/art-e-fact/tron1-artefacts-description.git",
-        "versions": {"jazzy": "migrate-colors-from-classic", "humble": "main"},
+        "versions": {"jazzy": "main", "humble": "main"},
     },
     "robot-visualization": {
         "url": "https://github.com/limxdynamics/robot-visualization.git",
@@ -28,7 +28,7 @@ REPO_SPECS = {
     },
     "robot-gazebo": {
         "url": "https://github.com/art-e-fact/tron1-artefacts-demo.git",
-        "versions": {"jazzy": "harmonic", "humble": "humble"},
+        "versions": {"jazzy": "main", "humble": "humble"},
     },
     "rl-deploy-python": {
         "url": "https://github.com/art-e-fact/tron1-rl-deploy-artefacts.git",

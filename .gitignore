@@ -5,6 +5,8 @@ __pycache__/
 build/
 install/
 log/
+logs/
 src/
 stamps/
 venv/
+test_report/
