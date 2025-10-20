@@ -39,7 +39,7 @@ def test_report_dir(session_report_dir: str, request: pytest.FixtureRequest):
 
 @pytest.fixture(scope="function", autouse=True)
 def switch_test_datalog(test_report_dir: str, request: pytest.FixtureRequest):
-    logger = logging.getLogger("graphtefacts")
+    logger = logging.getLogger("data")
     for h in logger.handlers:
         if isinstance(h, logging.FileHandler):
             logger.removeHandler(h)
