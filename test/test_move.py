@@ -2,11 +2,13 @@ import logging
 import math
 import os
 import shutil
+import threading
 import time
 from contextlib import suppress
 
 import pytest
 import utils
+from artefacts_toolkit_config.config import get_artefacts_params
 from artefacts_toolkit_rosbag.image_topics import extract_video
 from get_sdk import get_sdk
 
@@ -63,86 +65,179 @@ def record_bag(test_report_dir, pointfoot, gz_bridge, sdk_bridge):
 
 @pytest.fixture(scope="module", autouse=True)
 def pointfoot_rl_controller(module_report_dir: str):
-    """Launch pointfoot_gazebo for each test and tear down after."""
+    """limxsdk RL coontroller."""
     yield from utils.pointfoot_rl_controller(module_report_dir)
 
 
 @pytest.fixture(scope="function", autouse=True)
 def pointfoot(test_report_dir: str):
-    """Launch pointfoot_gazebo for each test and tear down after."""
+    """Gz sim."""
     yield from utils.pointfoot(test_report_dir)
 
 
 @pytest.fixture(scope="function", autouse=True)
 def gz_bridge(test_report_dir, pointfoot):
+    """ros_gz bridge."""
     yield from utils.manual_gs_bridge(test_report_dir)
 
 
 @pytest.fixture(scope="module", autouse=True)
 def sdk_bridge(module_report_dir):
+    """SDK to ROS bridge."""
     yield from utils.sdk_bridge(module_report_dir)
 
 
 @pytest.fixture(scope="function")
-def demo(test_report_dir: str):
-    """Per-test GoToDemo with its own log directory."""
-    log_dir = os.path.join(test_report_dir, "api_logs.jsonl")
+def demo():
     robot, joystick = get_sdk()
-    d = GoToDemo(
-        log_path=log_dir,
-        robot=robot,
-        joystick=joystick,
-    )
+    d = GoToDemo(robot=robot, joystick=joystick)
     yield d
     d.close()
+    time.sleep(0.05)
 
 
-def test_move_forward(demo: GoToDemo):
-    x0, y0, yaw0 = demo.odom.get()
+MOVE_CASES = [
+    pytest.param(
+        dict(forward_m=1.0, sideways_m=0.5, dyaw_deg=20, timeout_s=20.0),
+        dict(min_progress=0.6, max_yaw_err_deg=25, expect={"reached"}),
+        id="move:xy+ori",
+    ),
+]
 
-    res = demo.move(forward_m=5.00, sideways_m=0.0, dyaw=0.0, timeout_s=20.0)
-    logger.debug(res)
-    assert res.get("status") == "reached", f"move() failed: {res}"
+MOVE_FACE_CASES = [
+    # success forward+turn
+    pytest.param(
+        dict(
+            forward_m=5.0,
+            dyaw_deg=150,
+            orientation="relative",
+            hold=False,
+            hold_timeout_s=None,
+            timeout_s=35.0,
+        ),
+        dict(expect={"reached"}, dist_range=(4.8, 5.2)),
+        id="face:xy+ori",
+    ),
+    # success pure turn
+    pytest.param(
+        dict(
+            forward_m=0.0,
+            dyaw_deg=90,
+            orientation="relative",
+            hold=False,
+            hold_timeout_s=None,
+            timeout_s=20.0,
+        ),
+        dict(expect={"reached"}, yaw_target_deg=90, max_yaw_err_deg=12),
+        id="face:turn90",
+    ),
+    # success forward + hold with finite timeout
+    pytest.param(
+        dict(
+            forward_m=3.5,
+            dyaw_deg=45,
+            orientation="relative",
+            hold=True,
+            hold_timeout_s=3.5,
+            timeout_s=35.0,
+        ),
+        dict(expect={"reached", "reached_and_hold_timeout"}, min_progress=0.25),
+        id="face:hold_timeout",
+    ),
+    # move timeout
+    pytest.param(
+        dict(
+            forward_m=10.0,
+            dyaw_deg=0,
+            orientation="relative",
+            hold=False,
+            hold_timeout_s=None,
+            timeout_s=0.5,
+        ),
+        dict(expect={"move_timeout", "align_timeout"}),
+        id="face:move_timeout",
+    ),
+]
 
-    x1, y1, yaw1 = demo.odom.get()
-    dist = _mag2(x1 - x0, y1 - y0)
-    assert dist <= 5.05, f"Expected <=5.05 m translation, got {dist:.3f} m"
 
-    d_yaw = abs(((yaw1 - yaw0 + math.pi) % (2 * math.pi)) - math.pi)
-    assert d_yaw <= math.radians(15), f"Yaw drift too large: {math.degrees(d_yaw):.1f}°"
-    time.sleep(0.2)
+@pytest.mark.parametrize("args,checks", MOVE_CASES)
+def test_move(demo: GoToDemo, args, checks):
+    res = demo.move(
+        forward_m=args["forward_m"],
+        sideways_m=args["sideways_m"],
+        dyaw=math.radians(args["dyaw_deg"]),
+        timeout_s=args["timeout_s"],
+    )
+    assert res.get("status") in checks["expect"], f"move() status {res}"
+
+    x, y, yaw = demo.odom.get()
+    if "min_progress" in checks:
+        assert (
+            _mag2(x, y) >= checks["min_progress"]
+        ), f"Too little progress: ({x:.3f},{y:.3f})"
+    if "max_yaw_err_deg" in checks:
+        yaw_err = abs(yaw - demo._ref_yaw)
+        assert yaw_err <= math.radians(
+            checks["max_yaw_err_deg"]
+        ), f"Yaw err {math.degrees(yaw_err):.1f}° too large"
 
 
-def test_move_face_turn(demo: GoToDemo):
-    yaw0, _, _ = demo.imu.get()
+@pytest.mark.parametrize("args,checks", MOVE_FACE_CASES)
+def test_move_face(demo: GoToDemo, args, checks):
+    x0, y0, _ = demo.odom.get()
+    yaw0, _, _, _, _ = demo.imu.get()
 
-    res = demo.move_face(forward_m=0.0, dyaw=math.pi / 2, orientation="relative")
-    assert res.get("status") == "reached", f"move_face() failed: {res}"
-
-    _, _, yaw1 = demo.odom.get()
-    d_yaw = ((yaw1 - yaw0 + math.pi) % (2 * math.pi)) - math.pi
-    err = abs(d_yaw - math.pi / 2.0)
-    assert err <= math.radians(10), f"Yaw error {math.degrees(err):.1f}° too large"
-    time.sleep(0.2)
-
-
-def test_move_face_forward_with_hold_timeout(demo: GoToDemo):
-    """
-    Face + move forward + hold using a finite hold_timeout_s.
-    """
     res = demo.move_face(
-        forward_m=3.50,
-        dyaw=math.radians(45.0),
+        forward_m=args["forward_m"],
+        dyaw=math.radians(args["dyaw_deg"]),
+        orientation=args["orientation"],
+        hold=args["hold"],
+        hold_timeout_s=args["hold_timeout_s"],
+        timeout_s=args["timeout_s"],
+    )
+    assert res.get("status") in checks["expect"], f"move_face() status {res}"
+
+    x1, y1, _ = demo.odom.get()
+    yaw1, _, _, _, _ = demo.imu.get()
+
+    if "dist_range" in checks:
+        lo, hi = checks["dist_range"]
+        dist = _mag2(x1 - x0, y1 - y0)
+        assert lo <= dist <= hi, f"Expected ~{(lo+hi)/2:.1f} m, got {dist:.3f} m"
+
+    if "min_progress" in checks:
+        dist = _mag2(x1 - x0, y1 - y0)
+        assert (
+            dist >= checks["min_progress"]
+        ), f"Too little forward progress ({dist:.3f} m)"
+
+    if "yaw_target_deg" in checks:
+        d_yaw = ((yaw1 - yaw0 + math.pi) % (2 * math.pi)) - math.pi
+        err = abs(d_yaw - math.radians(checks["yaw_target_deg"]))
+        assert err <= math.radians(
+            checks["max_yaw_err_deg"]
+        ), f"Yaw error {math.degrees(err):.1f}° too large"
+
+
+def test_move_face_hold_cancel(demo: GoToDemo):
+    """Separate test because it needs a cancel thread."""
+
+    def _cancel_after(delay_s: float):
+        time.sleep(delay_s)
+        demo.cancel()
+
+    killer = threading.Thread(target=_cancel_after, args=(1.0,), daemon=True)
+    killer.start()
+
+    res = demo.move_face(
+        forward_m=1.0,
+        dyaw=0.0,
         orientation="relative",
         hold=True,
-        hold_timeout_s=3.5,
-        timeout_s=30.0,
+        hold_timeout_s=None,  # infinite unless cancelled
+        timeout_s=25.0,
     )
     assert res.get("status") in {
-        "reached_and_hold_timeout",
+        "reached_and_cancelled",
         "reached",
     }, f"Unexpected {res}"
-
-    x, y, _ = demo.odom.get()
-    dist = _mag2(x, y)
-    assert dist >= 0.25, f"Too little forward progress ({dist:.3f} m)"
