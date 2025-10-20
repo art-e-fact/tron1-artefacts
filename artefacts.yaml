@@ -2,25 +2,21 @@ project: tron1-artefacts/tron1-artefacts
 version: 0.1.0
 
 jobs:
-  move: 
+  move_around:
     type: test
     runtime:
       framework: ros2:jazzy
       simulator: gazebo:harmonic
     scenarios:
-      defaults: {}
+      defaults:
+        output_dirs: ["test_report/latest/"]
       settings:
-        - name: move
-          pytest_file: test/test_move.py
-          output_dirs: 
-                - test_report/latest
-                - test_report/latest/conftest
-                - test_report/latest/test_move_forward
-                - test_report/latest/test_move_forward/bag
-                - test_report/latest/test_move_forward/video
-                - test_report/latest/test_move_face_turn
-                - test_report/latest/test_move_face_turn/bag
-                - test_report/latest/test_move_face_turn/video
-                - test_report/latest/test_move_face_forward_with_hold_timeout
-                - test_report/latest/test_move_face_forward_with_hold_timeout/bag
-                - test_report/latest/test_move_face_forward_with_hold_timeout/video
+        - name: move_around
+          pytest_file: test/art_test_move.py
+          params:
+            move:
+              - {forward_m: 1.0, sideways_m: 0.5, dyaw_deg: 20, timeout_s: 20}
+            move_face:
+              - {forward_m: 5.0, dyaw_deg: 150, hold: false, timeout_s: 35}
+              - {forward_m: 3.5, dyaw_deg: 45, hold: true, hold_timeout_s: 3.5, timeout_s: 35}
+              - {forward_m: 0.0, dyaw_deg: 170, hold: false, timeout_s: 0.2}
