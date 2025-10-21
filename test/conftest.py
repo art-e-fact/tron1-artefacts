@@ -52,10 +52,10 @@ def switch_test_datalog(test_report_dir: str, request: pytest.FixtureRequest):
     logger.addHandler(fh)
     return file_path
 
-
 def pytest_collection_modifyitems(session, config, items):
     """
     Changes the test name depending on the param in artefacts.yaml
+    and deselects tests that are not active in this scenario.
     """
     try:
         from artefacts_toolkit_config.config import get_artefacts_params
@@ -74,12 +74,24 @@ def pytest_collection_modifyitems(session, config, items):
         if name:
             suffix_by_test["test_move_face"] = f"[{name}]"
 
-    if not suffix_by_test:
-        return
+    want_move = isinstance(p.get("move"), dict)
+    want_face = isinstance(p.get("move_face"), dict)
+    keep, deselect = [], []
 
     for item in items:
         base = getattr(item, "originalname", None) or item.name
         suffix = suffix_by_test.get(base)
-        if not suffix:
+        if not want_move and base == "test_move":
+            deselect.append(item)
             continue
-        item._nodeid = item._nodeid.replace(base, base + suffix, 1)
+        if not want_face and base == "test_move_face":
+            deselect.append(item)
+            continue
+        if suffix:
+            item._nodeid = item._nodeid.replace(base, base + suffix, 1)
+        keep.append(item)
+
+    if deselect:
+        config.hook.pytest_deselected(items=deselect)
+        items[:] = keep
+

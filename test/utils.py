@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import signal
 import subprocess
 import time
@@ -272,3 +273,34 @@ def bag_recorder(topic_names: List[str], directory="rosbags", use_sim_time=False
     with ignore_int():
         finish_process(p)
     logger.debug("rosbag closed")
+
+
+def cleanup(session_report_dir):
+    """
+    Removes 0-byte files recursively under session_report_dir
+    Removes empty directories
+    """
+    yield
+    prefix = "[CLEANUP] "
+    logger.debug(f"{prefix}Starting cleanup in: {session_report_dir}")
+
+    for root, dirs, files in os.walk(session_report_dir, topdown=False):
+        for f in files:
+            path = os.path.join(root, f)
+            try:
+                if os.path.getsize(path) == 0:
+                    os.remove(path)
+                    logger.debug(f"{prefix}Removed 0-byte file: {path}")
+            except OSError as e:
+                logger.debug(f"{prefix}Failed to check/remove file {path}: {e}")
+
+        for d in dirs:
+            dirpath = os.path.join(root, d)
+            try:
+                if not os.listdir(dirpath):
+                    shutil.rmtree(dirpath, ignore_errors=True)
+                    logger.debug(f"{prefix}Removed empty directory: {dirpath}")
+            except OSError as e:
+                logger.debug(f"{prefix}Failed to remove directory {dirpath}: {e}")
+
+    logger.debug(f"{prefix}Cleanup completed.")
