@@ -1,8 +1,8 @@
-from datetime import datetime
 import logging
 import os
-import pytest
+from datetime import datetime
 
+import pytest
 from logger import JsonLineFormatter, setup_logger
 
 
@@ -51,3 +51,35 @@ def switch_test_datalog(test_report_dir: str, request: pytest.FixtureRequest):
     fh.setLevel(logging.DEBUG)
     logger.addHandler(fh)
     return file_path
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """
+    Changes the test name depending on the param in artefacts.yaml
+    """
+    try:
+        from artefacts_toolkit_config.config import get_artefacts_params
+
+        p = get_artefacts_params() or {}
+    except Exception:
+        return
+
+    suffix_by_test = {}
+    if "move" in p and isinstance(p["move"], dict):
+        name = p["move"].get("name")
+        if name:
+            suffix_by_test["test_move"] = f"[{name}]"
+    if "move_face" in p and isinstance(p["move_face"], dict):
+        name = p["move_face"].get("name")
+        if name:
+            suffix_by_test["test_move_face"] = f"[{name}]"
+
+    if not suffix_by_test:
+        return
+
+    for item in items:
+        base = getattr(item, "originalname", None) or item.name
+        suffix = suffix_by_test.get(base)
+        if not suffix:
+            continue
+        item._nodeid = item._nodeid.replace(base, base + suffix, 1)

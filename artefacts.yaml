@@ -11,12 +11,15 @@ jobs:
       defaults:
         output_dirs: ["test_report/latest/"]
       settings:
-        - name: move_around
+        - name: move
           pytest_file: test/art_test_move.py
           params:
             move:
               - {forward_m: 1.0, sideways_m: 0.5, dyaw_deg: 20, timeout_s: 20}
+        - name: move_face
+          pytest_file: test/art_test_move.py
+          params:
             move_face:
               - {forward_m: 5.0, dyaw_deg: 150, hold: false, timeout_s: 35}
-              - {forward_m: 3.5, dyaw_deg: 45, hold: true, hold_timeout_s: 3.5, timeout_s: 35}
-              - {forward_m: 0.0, dyaw_deg: 170, hold: false, timeout_s: 0.2}
+              - {name: "hold", forward_m: 3.5, dyaw_deg: 45, hold: true, hold_timeout_s: 3.5, timeout_s: 35}
+              - {name: "timeout", forward_m: 0.0, dyaw_deg: 170, hold: false, timeout_s: 0.2}
