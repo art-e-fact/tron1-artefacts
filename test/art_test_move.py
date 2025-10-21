@@ -143,6 +143,11 @@ def sdk_bridge(module_report_dir):
     yield from utils.sdk_bridge(module_report_dir)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup(session_report_dir):
+    yield from utils.cleanup(session_report_dir)
+
+
 @pytest.fixture(scope="function")
 def demo():
     robot, joystick = get_sdk()
