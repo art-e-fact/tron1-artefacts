@@ -52,6 +52,7 @@ def switch_test_datalog(test_report_dir: str, request: pytest.FixtureRequest):
     logger.addHandler(fh)
     return file_path
 
+
 def pytest_collection_modifyitems(session, config, items):
     """
     Changes the test name depending on the param in artefacts.yaml
@@ -88,10 +89,15 @@ def pytest_collection_modifyitems(session, config, items):
             deselect.append(item)
             continue
         if suffix:
-            item._nodeid = item._nodeid.replace(base, base + suffix, 1)
+            if ".py" in item._nodeid:
+                parts = item._nodeid.split("::")
+                file_part, test_part = parts[0], "::".join(parts[1:])
+                item._nodeid = f"{file_part}::{test_part}{suffix}"
+            else:
+                item._nodeid = item._nodeid.replace(base, base + suffix, 1)
+
         keep.append(item)
 
     if deselect:
         config.hook.pytest_deselected(items=deselect)
         items[:] = keep
-
