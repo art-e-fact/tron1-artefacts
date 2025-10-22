@@ -89,7 +89,10 @@ def move_face_case():
 
 @pytest.fixture(scope="function", autouse=True)
 def record_bag(test_report_dir, pointfoot, gz_bridge, sdk_bridge):
-    bag_dir = f"{test_report_dir}/bag"
+    report_dir = f"./test_report/tmp_bag"
+    report_abs = os.path.abspath(report_dir)
+    bag_dir = f"{report_abs}"
+    # bag_dir = f"{test_report_dir}/bag"
     vid_dir = f"{test_report_dir}/vid_bag"
     bag_gen = utils.bag_recorder(
         ["/clock", "/imu", "/joint_states"],
