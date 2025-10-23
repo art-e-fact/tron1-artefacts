@@ -10,15 +10,14 @@ jobs:
     scenarios:
       defaults:
         output_dirs: ["test_report/latest/"]
+        pytest_file: test/art_test_move.py
       settings:
         - name: move
-          pytest_file: test/art_test_move.py
           params:
             move:
               - {name: "fw_1m+side_0.5m+dyaw_20", forward_m: 1.0, sideways_m: 0.5, dyaw_deg: 20, timeout_s: 20}
               - {name: "fw_5m+side_3m", forward_m: 5.0, sideways_m: 3.0, dyaw_deg: 0, timeout_s: 30}
         - name: move_face
-          pytest_file: test/art_test_move.py
           params:
             move_face:
               - {name: "dyaw_150+fw_5m", forward_m: 5.0, dyaw_deg: 150, hold: false, timeout_s: 35}
