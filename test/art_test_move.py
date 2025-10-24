@@ -8,6 +8,7 @@ from contextlib import suppress
 
 import pytest
 import utils
+from artefacts_toolkit_config.config import get_artefacts_params
 from artefacts_toolkit_rosbag.image_topics import extract_video
 from get_sdk import get_sdk
 
@@ -27,21 +28,19 @@ def _wrap_pi(a: float) -> float:
 @pytest.fixture
 def move_case():
     """Return (args, checks) for 'move' if present; skip if not."""
-    from artefacts_toolkit_config.config import get_artefacts_params
-
-    p = get_artefacts_params()
-    if "move" not in p:
+    artefacts_params = get_artefacts_params()
+    if "move" not in artefacts_params:
         pytest.skip("No 'move' parameters for this run")
-    c = dict(p["move"])
+    cfg_move = dict(artefacts_params["move"])
 
     args = {
-        "forward_m": float(c["forward_m"]),
-        "sideways_m": float(c["sideways_m"]),
-        "dyaw_deg": float(c["dyaw_deg"]),
-        "timeout_s": float(c["timeout_s"]),
+        "forward_m": float(cfg_move["forward_m"]),
+        "sideways_m": float(cfg_move["sideways_m"]),
+        "dyaw_deg": float(cfg_move["dyaw_deg"]),
+        "timeout_s": float(cfg_move["timeout_s"]),
     }
 
-    checks = dict(c.get("checks", {}))
+    checks = dict(cfg_move.get("checks", {}))
     checks.setdefault("expect", {"reached"})
     if ("min_progress" not in checks) and (args["forward_m"] or args["sideways_m"]):
         checks["min_progress"] = 0.6
@@ -52,26 +51,24 @@ def move_case():
 @pytest.fixture
 def move_face_case():
     """Return (args, checks) for 'move_face' if present; skip if not."""
-    from artefacts_toolkit_config.config import get_artefacts_params
-
-    p = get_artefacts_params()
-    if "move_face" not in p:
+    artefacts_params = get_artefacts_params()
+    if "move_face" not in artefacts_params:
         pytest.skip("No 'move_face' parameters for this run")
-    c = dict(p["move_face"])
+    cfg_face = dict(artefacts_params["move_face"])
 
     args = {
-        "forward_m": float(c["forward_m"]),
-        "dyaw_deg": float(c["dyaw_deg"]),
-        "hold": bool(c.get("hold", False)),
-        "hold_timeout_s": c.get("hold_timeout_s", None),
-        "timeout_s": float(c["timeout_s"]),
+        "forward_m": float(cfg_face["forward_m"]),
+        "dyaw_deg": float(cfg_face["dyaw_deg"]),
+        "hold": bool(cfg_face.get("hold", False)),
+        "hold_timeout_s": cfg_face.get("hold_timeout_s", None),
+        "timeout_s": float(cfg_face["timeout_s"]),
         "orientation": "relative",
     }
 
-    checks = dict(c.get("checks", {}))
+    checks = dict(cfg_face.get("checks", {}))
     if args["forward_m"] > 0 and not args["hold"] and "dist_range" not in checks:
-        d = args["forward_m"]
-        checks["dist_range"] = (0.9 * d, 1.1 * d)
+        dist_m = args["forward_m"]
+        checks["dist_range"] = (0.9 * dist_m, 1.1 * dist_m)
 
     if abs(args["dyaw_deg"]) > 0.0:
         checks.setdefault("yaw_target_deg", args["dyaw_deg"])
@@ -154,12 +151,10 @@ def cleanup(session_report_dir):
 @pytest.fixture(scope="function")
 def demo():
     robot, joystick = get_sdk()
-    d = GoToDemo(robot=robot, joystick=joystick)
-    try:
-        yield d
-    finally:
-        d.close()
-        time.sleep(0.05)
+    controller = GoToDemo(robot=robot, joystick=joystick)
+    yield controller
+    controller.close()
+    time.sleep(0.05)
 
 
 def test_move(demo: GoToDemo, move_case):
