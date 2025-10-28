@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 import pytest
-from logger import JsonLineFormatter, setup_logger
+from logger import CsvXYFileHandler, JsonLineFormatter, setup_logger
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -50,6 +50,21 @@ def switch_test_datalog(test_report_dir: str, request: pytest.FixtureRequest):
     fh.setFormatter(JsonLineFormatter())
     fh.setLevel(logging.DEBUG)
     logger.addHandler(fh)
+    return file_path
+
+
+@pytest.fixture(scope="function", autouse=True)
+def switch_test_graph(test_report_dir: str):
+    logger = logging.getLogger("graph")
+    for h in list(logger.handlers):
+        if isinstance(h, logging.FileHandler):
+            logger.removeHandler(h)
+            h.close()
+
+    file_path = f"{test_report_dir}/trajectory.csv"
+    h = CsvXYFileHandler(file_path, mode="w")
+    h.setLevel(logging.INFO)
+    logger.addHandler(h)
     return file_path
 
 
