@@ -1,10 +1,13 @@
 import logging
+import math
 import os
+import re
 import shutil
 import signal
 import subprocess
+import threading
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any, List
@@ -12,6 +15,23 @@ from typing import Any, List
 import psutil
 
 logger = logging.getLogger("artefacts." + __name__)
+
+gt_log = logging.getLogger("groundtruth")
+
+POSE_START = re.compile(r"^\s*pose\s*\{\s*$")
+NAME_LINE = re.compile(r'^\s*name:\s*"([^"]+)"')
+POS_RE = re.compile(
+    r"position\s*\{[^}]*?x:\s*([-\deE\.]+)[^}]*?y:\s*([-\deE\.]+)[^}]*?z:\s*([-\deE\.]+)",
+    re.DOTALL,
+)
+ORI_RE = re.compile(
+    r"orientation\s*\{[^}]*?x:\s*([-\deE\.]+)[^}]*?y:\s*([-\deE\.]+)[^}]*?z:\s*([-\deE\.]+)[^}]*?w:\s*([-\deE\.]+)",
+    re.DOTALL,
+)
+
+
+def _quat_to_yaw(x: float, y: float, z: float, w: float) -> float:
+    return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
 
 @contextmanager
@@ -304,3 +324,95 @@ def cleanup(session_report_dir):
                 logger.debug(f"{prefix}Failed to remove directory {dirpath}: {e}")
 
     logger.debug(f"{prefix}Cleanup completed.")
+
+
+def gz_groundtruth(test_report_dir, entity_name="pointfoot_entity", world="default"):
+    """
+    Stream groundtruth pose from gz topic and provide latest() access.
+    """
+    p_name = "gz_groundtruth"
+    prefix = f"STARTUP [{p_name}]: "
+
+    stdout_file = open(f"{test_report_dir}/gz_gt_stdout.txt", "wb")
+    stderr_file = open(f"{test_report_dir}/gz_gt_stderr.txt", "wb")
+
+    p = subprocess.Popen(
+        ["gz", "topic", "-e", "--topic", f"/world/{world}/pose/info"],
+        stdout=subprocess.PIPE,
+        stderr=stderr_file,
+        text=True,
+        preexec_fn=os.setsid,
+    )
+
+    logger.debug(f"{prefix}process launching [{p.args}] entity={entity_name}")
+
+    stop_evt = threading.Event()
+    latest_lock = threading.Lock()
+    latest_rec = None
+
+    def _reader():
+        nonlocal latest_rec
+        prefix = f"READER [{p_name}]: "
+        if not p.stdout:
+            return
+        inside, depth, buf = False, 0, []
+        for line in p.stdout:
+            if stop_evt.is_set():
+                break
+            stdout_file.write(line.encode("utf-8"))
+            if not inside:
+                if POSE_START.match(line):
+                    inside, depth, buf = True, 1, [line]
+                continue
+            buf.append(line)
+            depth += line.count("{") - line.count("}")
+            if depth > 0:
+                continue
+            inside = False
+            block = "".join(buf)
+            if f'name: "{entity_name}"' not in block:
+                continue
+            try:
+                pos = POS_RE.findall(block)
+                ori = ORI_RE.findall(block)
+                if not pos or not ori:
+                    continue
+                px, py, pz = map(float, pos[0])
+                qx, qy, qz, qw = map(float, ori[0])
+                yaw = _quat_to_yaw(qx, qy, qz, qw)
+                latest_rec = {
+                    "t": time.time(),
+                    "pos": {"x": px, "y": py, "z": pz},
+                    "ori": {"x": qx, "y": qy, "z": qz, "w": qw, "yaw": yaw},
+                }
+                with latest_lock:
+                    gt_log.info("gt_pose", extra={"data": latest_rec})
+            except Exception as e:
+                logger.debug(f"{prefix} parse error: {e}")
+
+    th = threading.Thread(target=_reader, daemon=True)
+    th.start()
+
+    class Stream:
+        @staticmethod
+        def latest(timeout: float | None = None):
+            end = time.time() + timeout if timeout else None
+            while True:
+                with latest_lock:
+                    if latest_rec:
+                        return latest_rec.copy()
+                if not end or time.time() > end:
+                    return None
+                time.sleep(0.05)
+
+    yield p, Stream
+
+    prefix = f"SHUTDOWN [{p_name}]: "
+    logger.debug(f"{prefix}stopping")
+    stop_evt.set()
+    with ignore_int():
+        finish_process(p)
+    th.join(timeout=1.0)
+    stdout_file.close()
+    stderr_file.close()
+    logger.debug(f"{prefix}finished")

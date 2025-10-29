@@ -150,6 +150,7 @@ def setup_logger(debug_path: Optional[str] = None):
             },
             "data": {"level": "INFO", "handlers": [], "propagate": False},
             "graph": {"level": "INFO", "handlers": [], "propagate": False},
+            "groundtruth": {"level": "INFO", "handlers": [], "propagate": False},
         },
     }
     logging.config.dictConfig(cfg)
