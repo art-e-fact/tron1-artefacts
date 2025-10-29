@@ -328,7 +328,7 @@ def cleanup(session_report_dir):
 
 def gz_groundtruth(test_report_dir, entity_name="pointfoot_entity", world="default"):
     """
-    Stream groundtruth pose from gz topic and provide latest() access.
+    Gets groundtruth pose from gz topic for given entity name.
     """
     p_name = "gz_groundtruth"
     prefix = f"STARTUP [{p_name}]: "
