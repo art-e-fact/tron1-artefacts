@@ -130,7 +130,7 @@ def setup_logger(debug_path: Optional[str] = None):
                 "handlers": handlers,
                 "propagate": False,
             },
-            "graphtefacts": {
+            "data": {
                 "level": "INFO",
                 "handlers": [],
                 "propagate": False,

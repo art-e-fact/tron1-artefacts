@@ -1,8 +1,8 @@
-from datetime import datetime
 import logging
 import os
-import pytest
+from datetime import datetime
 
+import pytest
 from logger import JsonLineFormatter, setup_logger
 
 
@@ -39,7 +39,7 @@ def test_report_dir(session_report_dir: str, request: pytest.FixtureRequest):
 
 @pytest.fixture(scope="function", autouse=True)
 def switch_test_datalog(test_report_dir: str, request: pytest.FixtureRequest):
-    logger = logging.getLogger("graphtefacts")
+    logger = logging.getLogger("data")
     for h in logger.handlers:
         if isinstance(h, logging.FileHandler):
             logger.removeHandler(h)
@@ -51,3 +51,53 @@ def switch_test_datalog(test_report_dir: str, request: pytest.FixtureRequest):
     fh.setLevel(logging.DEBUG)
     logger.addHandler(fh)
     return file_path
+
+
+def pytest_collection_modifyitems(session, config, items):
+    """
+    Changes the test name depending on the param in artefacts.yaml
+    and deselects tests that are not active in this scenario.
+    """
+    try:
+        from artefacts_toolkit_config.config import get_artefacts_params
+
+        p = get_artefacts_params() or {}
+    except Exception:
+        return
+
+    suffix_by_test = {}
+    if "move" in p and isinstance(p["move"], dict):
+        name = p["move"].get("name")
+        if name:
+            suffix_by_test["test_move"] = f"[{name}]"
+    if "move_face" in p and isinstance(p["move_face"], dict):
+        name = p["move_face"].get("name")
+        if name:
+            suffix_by_test["test_move_face"] = f"[{name}]"
+
+    want_move = isinstance(p.get("move"), dict)
+    want_face = isinstance(p.get("move_face"), dict)
+    keep, deselect = [], []
+
+    for item in items:
+        base = getattr(item, "originalname", None) or item.name
+        suffix = suffix_by_test.get(base)
+        if not want_move and base == "test_move":
+            deselect.append(item)
+            continue
+        if not want_face and base == "test_move_face":
+            deselect.append(item)
+            continue
+        if suffix:
+            if ".py" in item._nodeid:
+                parts = item._nodeid.split("::")
+                file_part, test_part = parts[0], "::".join(parts[1:])
+                item._nodeid = f"{file_part}::{test_part}{suffix}"
+            else:
+                item._nodeid = item._nodeid.replace(base, base + suffix, 1)
+
+        keep.append(item)
+
+    if deselect:
+        config.hook.pytest_deselected(items=deselect)
+        items[:] = keep
