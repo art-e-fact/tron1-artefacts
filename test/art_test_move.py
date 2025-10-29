@@ -143,6 +143,11 @@ def sdk_bridge(module_report_dir):
     yield from utils.sdk_bridge(module_report_dir)
 
 
+@pytest.fixture(scope="function", autouse=False)
+def gz_groundtruth(test_report_dir):
+    yield from utils.gz_groundtruth(test_report_dir)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def cleanup(session_report_dir):
     yield from utils.cleanup(session_report_dir)
@@ -157,8 +162,14 @@ def demo():
     time.sleep(0.05)
 
 
-def test_move(demo: GoToDemo, move_case):
+def test_move(demo: GoToDemo, move_case, gz_groundtruth):
     args, checks = move_case
+
+    proc, gt = gz_groundtruth
+    p0 = gt.latest(timeout=10.0)
+    assert p0 is not None, "No ground truth pose before movement"
+    x0, y0 = p0["pos"]["x"], p0["pos"]["y"]
+    yaw0 = p0["ori"]["yaw"]
 
     res = demo.move(
         forward_m=args["forward_m"],
@@ -168,23 +179,34 @@ def test_move(demo: GoToDemo, move_case):
     )
     assert res.get("status") in checks["expect"], f"move() status {res}"
 
-    x, y, yaw = demo.odom.get()
+    p1 = gt.latest(timeout=10.0)
+    assert p1 is not None, "No ground truth pose after movement"
+    x1, y1 = p1["pos"]["x"], p1["pos"]["y"]
+    yaw1 = p1["ori"]["yaw"]
+
+    dist_gt = _mag2(x1 - x0, y1 - y0)
     if "min_progress" in checks:
         assert (
-            _mag2(x, y) >= checks["min_progress"]
-        ), f"Too little progress: ({x:.3f},{y:.3f})"
+            dist_gt >= checks["min_progress"]
+        ), f"Too little forward progress: {dist_gt:.3f} m"
+
     if "max_yaw_err_deg" in checks:
-        yaw_err = abs(yaw - demo._ref_yaw)
+        dyaw_target = math.radians(args["dyaw_deg"])
+        dyaw_meas = _wrap_pi(yaw1 - yaw0)
+        yaw_err = abs(_wrap_pi(dyaw_meas - dyaw_target))
         assert yaw_err <= math.radians(
             checks["max_yaw_err_deg"]
-        ), f"Yaw err {math.degrees(yaw_err):.1f}°"
+        ), f"ground truth yaw err {math.degrees(yaw_err):.1f}° (target {args['dyaw_deg']}°)"
 
 
-def test_move_face(demo: GoToDemo, move_face_case):
+def test_move_face(demo: GoToDemo, move_face_case, gz_groundtruth):
     args, checks = move_face_case
 
-    x0, y0, _ = demo.odom.get()
-    yaw0, _, _, _, _ = demo.imu.get()
+    proc, gt = gz_groundtruth
+    p0 = gt.latest(timeout=10.0)
+    assert p0 is not None, "No ground truth pose before movement"
+    x0, y0 = p0["pos"]["x"], p0["pos"]["y"]
+    yaw0 = p0["ori"]["yaw"]
 
     res = demo.move_face(
         forward_m=args["forward_m"],
@@ -197,8 +219,10 @@ def test_move_face(demo: GoToDemo, move_face_case):
     status = res.get("status")
     assert status in checks["expect"], f"move_face() status {res}"
 
-    x1, y1, _ = demo.odom.get()
-    yaw1, _, _, _, _ = demo.imu.get()
+    p1 = gt.latest(timeout=10.0)
+    assert p1 is not None, "No ground truth pose after movement"
+    x1, y1 = p1["pos"]["x"], p1["pos"]["y"]
+    yaw1 = p1["ori"]["yaw"]
 
     success_like = status in {
         "reached",
@@ -208,18 +232,19 @@ def test_move_face(demo: GoToDemo, move_face_case):
 
     if "dist_range" in checks and success_like:
         lo, hi = checks["dist_range"]
-        dist = _mag2(x1 - x0, y1 - y0)
-        assert lo <= dist <= hi, f"Expected ~{(lo+hi)/2:.1f} m, got {dist:.3f} m"
+        dist_gt = _mag2(x1 - x0, y1 - y0)
+        assert lo <= dist_gt <= hi, f"Expected ~{(lo+hi)/2:.1f} m, got {dist_gt:.3f} m"
 
     if "min_progress" in checks and success_like:
-        dist = _mag2(x1 - x0, y1 - y0)
+        dist_gt = _mag2(x1 - x0, y1 - y0)
         assert (
-            dist >= checks["min_progress"]
-        ), f"Too little forward progress ({dist:.3f} m)"
+            dist_gt >= checks["min_progress"]
+        ), f"Too little forward progress ({dist_gt:.3f} m)"
 
     if "yaw_target_deg" in checks and success_like:
-        target_yaw_abs = _wrap_pi(yaw0 + math.radians(checks["yaw_target_deg"]))
-        yaw_err = abs(_wrap_pi(yaw1 - target_yaw_abs))
+        dyaw_target = math.radians(checks["yaw_target_deg"])
+        dyaw_meas = _wrap_pi(yaw1 - yaw0)
+        yaw_err = abs(_wrap_pi(dyaw_meas - dyaw_target))
         assert yaw_err <= math.radians(
             checks["max_yaw_err_deg"]
-        ), f"Yaw error {math.degrees(yaw_err):.1f}° too large"
+        ), f"ground truth yaw error {math.degrees(yaw_err):.1f}° too large"
