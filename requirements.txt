@@ -1,3 +1,3 @@
 src/limxsdk_python/python3/amd64/limxsdk-3.4.2-py3-none-any.whl
 artefacts-toolkit
-# pip install --extra-index-url https://test.pypi.org/simple/ artefacts-cli==0.9.9.dev9
+--extra-index-url https://test.pypi.org/simple/ artefacts-cli==0.9.9.dev9
