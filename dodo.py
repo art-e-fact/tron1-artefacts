@@ -428,7 +428,6 @@ def task_setup():
             "python_venv:create-venv",
             "pydep",
             "rosdep:install",
-            "build",
         ],
         "doc": "End-to-end setup & build.",
     }
