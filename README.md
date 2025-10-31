@@ -23,7 +23,7 @@ This allows the same installer to seamlessly handle both ecosystems with no manu
 ### Install ROS 2 Jazzy or Humble
 For installation, please follow the official guides below and select **`ros-{ROS_DISTRO}-desktop`**:
 
-[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)  
+[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
 [ROS 2 Humble Installation on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
 ### Install fundamental dependencies
@@ -47,20 +47,20 @@ source bash_completion_doit.bash
 
 Once ROS 2 and system prerequisites are installed, this workspace manages everything else through `doit` tasks.
 
-### Full installation (recommended on first run)
+### Initial setup
 ```bash
 cd ~/tron_artefacts_ws
 doit setup
 ```
-> Installs dependencies, creates the virtual environment, sets up ROS 2 packages, and builds the workspace.
+> Installs dependencies, creates the virtual environment, and sets up ROS 2 packages.
 
 
-### Rebuild the workspace
+### Build the workspace
 ```bash
 cd ~/tron_artefacts_ws
 doit build
 ```
-> Rebuilds all packages in the workspace using `colcon`.
+> Builds all packages in the workspace using `colcon`.
 
 
 ### Update repositories
@@ -76,12 +76,13 @@ doit download
 cd ~/tron_artefacts_ws
 doit clean
 doit setup
+doit build
 ```
 > Refreshes repositories and rebuilds everything from scratch.
 
 ---
 
-##  3. Usage and testing
+##  3. Usage
 
 - Select robot type
   - List available robot types via the Shell command tree -L 1 src/robot-description/pointfoot:
@@ -102,19 +103,33 @@ doit setup
     ```bash
     echo 'export ROBOT_TYPE=PF_TRON1A' >> ~/.bashrc && source ~/.bashrc
     ```
+- Select the trained policy
+Set the RL_TYPE environmental variable to isaacgym or isaaclab:
 
-- Run the simulation: You can set the use_support parameter of the empty_world.launch.py file to true, and execute the following Shell command to run the simulation:
+```bash
+echo 'export RL_TYPE=isaacgym' >> ~/.bashrc && source ~/.bashrc
+```
+- Run the RL controller: Do this before the simulation, if you want the robot to start walking, or else it will fall:
 
   ```bash
   source ~/tron_artefacts_ws/install/setup.bash
-  ros2 launch pointfoot_gazebo empty_world.launch.py
+  source ~/tron_artefacts_ws/venv/bin/activate
+  python3 ~/tron_artefacts_ws/src/rl-deploy-python/main.py
   ```
 
-- Run the control routine to ensure that the robot in the simulator is moving, indicating that the simulation environment has been successfully set up:
+- Run the simulation: You can run the server (no GUI) instead by passing server:=true param:
 
   ```bash
   source ~/tron_artefacts_ws/install/setup.bash
-  ros2 run limxsdk_python example
+  ros2 launch pointfoot_gazebo empty_world.launch.py server:=false
+  ```
+
+- Run the custom controller to move the robot:
+
+  ```bash
+  source ~/tron_artefacts_ws/install/setup.bash
+  source ~/tron_artefacts_ws/venv/bin/activate
+  python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
   ```
 
 ## Notes
