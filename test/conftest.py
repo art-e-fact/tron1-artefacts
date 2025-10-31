@@ -61,10 +61,25 @@ def switch_test_graph(test_report_dir: str):
             logger.removeHandler(h)
             h.close()
 
-    file_path = f"{test_report_dir}/trajectory.csv"
+    file_path = f"{test_report_dir}/trajectory_rel.csv"
     h = CsvXYFileHandler(file_path, mode="w")
     h.setLevel(logging.INFO)
     logger.addHandler(h)
+    return file_path
+
+
+@pytest.fixture(scope="function", autouse=True)
+def switch_test_graph_gt(test_report_dir: str):
+    lg = logging.getLogger("groundtruth")
+    for h in list(lg.handlers):
+        if isinstance(h, logging.FileHandler):
+            lg.removeHandler(h)
+            h.close()
+
+    file_path = f"{test_report_dir}/trajectory_gt.csv"
+    h = CsvXYFileHandler(file_path, mode="w")
+    h.setLevel(logging.INFO)
+    lg.addHandler(h)
     return file_path
 
 

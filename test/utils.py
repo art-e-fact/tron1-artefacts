@@ -387,6 +387,7 @@ def gz_groundtruth(test_report_dir, entity_name="pointfoot_entity", world="defau
                 }
                 with latest_lock:
                     gt_log.info("gt_pose", extra={"data": latest_rec})
+                    gt_log.info("gt_xy", extra={"x": -py, "y": px})
             except Exception as e:
                 logger.debug(f"{prefix} parse error: {e}")
 
