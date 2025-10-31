@@ -120,3 +120,48 @@ doit setup
 ## Notes
 
 - Use `doit list` to see all available commands.
+
+## Manual Install
+
+```
+# Whatever you might need from here
+sudo apt update
+sudo apt install -y python3-colcon-common-extensions python3-rosdep git build-essential curl python3-venv python3-virtualenv libmatio-dev liburdfdom-dev libgz-sim8 libgz-transport13 libgz-msgs10 gz-harmonic ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
+
+
+
+git clone git@github.com:art-e-fact/tron1-artefacts.git
+cd tron1-artefacts
+git checkout csv_graphs
+source /opt/ros/jazzy/setup.zsh
+python3 -m venv --system-site-packages venv
+source venv/bin/activate
+export (PYTHONPATH= thingy so ros can see)
+touch ./venv/COLCON_IGNORE
+mkdir -p src && cd src
+
+git clone git@github.com:art-e-fact/tron1-artefacts-pythonsdk.git limxsdk_python -b main
+git clone git@github.com:art-e-fact/tron1-artefacts-description.git robot-description -b main  
+git clone git@github.com:limxdynamics/robot-visualization.git robot-visualization -b master
+git clone git@github.com:art-e-fact/tron1-artefacts-demo.git robot-gazebo -b main
+git clone git@github.com:art-e-fact/tron1-rl-deploy-artefacts.git rl-deploy-python -b main
+git clone git@github.com:limxdynamics/robot-joystick.git robot-joystick -b main
+cd ..
+
+pip install --upgrade pip wheel artefacts-cli
+pip install -r requirements.txt
+rosdep update --rosdistro jazzy
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install --cmake-args -Wno-dev
+source ./install/setup.zsh
+
+```
+
+### To run with artefacts
+
+The Robot Type and RL type needs to be set
+```
+export ROBOT_TYPE=PF_TRON1A
+export RL_TYPE=isaacgym # or isaacgym
+artefacts run move_around
+```
