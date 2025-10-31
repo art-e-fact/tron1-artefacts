@@ -131,6 +131,10 @@ echo 'export RL_TYPE=isaacgym' >> ~/.bashrc && source ~/.bashrc
   python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
   ```
 ## 4. Testing
+NOTE: Do not manually launch any processes before running the test.
+The test script will automatically collect and launch all necessary components.
+Please ensure that any other active processes (simulators or controllers) are fully terminated beforehand.
+
 - Test with Artefacts:
 
   ```bash
