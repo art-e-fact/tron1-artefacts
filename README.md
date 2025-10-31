@@ -68,7 +68,7 @@ doit build
 cd ~/tron_artefacts_ws
 doit download
 ```
-> Pulls, fetches, and updates all repositories defined in the runtime rendered .repos file (depending on the ROS distro). (via `vcstool`).
+> Pulls, fetches, and updates all repositories.
 
 
 ### Full rebuild cycle
@@ -103,7 +103,8 @@ doit build
     ```bash
     echo 'export ROBOT_TYPE=PF_TRON1A' >> ~/.bashrc && source ~/.bashrc
     ```
-- Select the trained policy
+- Select the trained policy:
+
 Set the RL_TYPE environmental variable to isaacgym or isaaclab:
 
 ```bash
@@ -112,24 +113,35 @@ echo 'export RL_TYPE=isaacgym' >> ~/.bashrc && source ~/.bashrc
 - Run the RL controller: Do this before the simulation, if you want the robot to start walking, or else it will fall:
 
   ```bash
-  source ~/tron_artefacts_ws/install/setup.bash
-  source ~/tron_artefacts_ws/venv/bin/activate
+  . ~/tron_artefacts_ws/SOURCE.bash
   python3 ~/tron_artefacts_ws/src/rl-deploy-python/main.py
   ```
 
 - Run the simulation: You can run the server (no GUI) instead by passing server:=true param:
 
   ```bash
-  source ~/tron_artefacts_ws/install/setup.bash
+  . ~/tron_artefacts_ws/SOURCE.bash
   ros2 launch pointfoot_gazebo empty_world.launch.py server:=false
   ```
 
 - Run the custom controller to move the robot:
 
   ```bash
-  source ~/tron_artefacts_ws/install/setup.bash
-  source ~/tron_artefacts_ws/venv/bin/activate
+  . ~/tron_artefacts_ws/SOURCE.bash
   python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
+  ```
+## 4. Testing
+- Test with Artefacts:
+
+  ```bash
+  . ~/tron_artefacts_ws/SOURCE.bash
+  artefacts run move_around
+  ```
+
+- Test with Pytest:
+
+  ```bash
+  bash TEST.bash
   ```
 
 ## Notes
