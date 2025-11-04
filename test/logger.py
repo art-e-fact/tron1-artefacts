@@ -1,5 +1,5 @@
-import json
 import copy
+import json
 import logging.config
 import os
 from datetime import datetime
@@ -28,6 +28,24 @@ class JsonLineFormatter(logging.Formatter):
         if record.exc_info:
             log_record["exc_info"] = self.formatException(record.exc_info)
         return json.dumps(log_record)
+
+
+class CsvXYFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord):
+        x = getattr(record, "x", None)
+        y = getattr(record, "y", None)
+        if x is None or y is None:
+            return ""
+        return f"{float(x):.6f},{float(y):.6f}"
+
+
+class CsvXYFileHandler(logging.FileHandler):
+    def __init__(self, filename, mode="w", encoding="utf-8", delay=False):
+        super().__init__(filename, mode=mode, encoding=encoding, delay=delay)
+        if not delay:
+            self.stream.write("x,y\n")
+            self.stream.flush()
+        self.setFormatter(CsvXYFormatter())
 
 
 LEVEL_COLORS = {
@@ -68,6 +86,7 @@ def setup_logger(debug_path: Optional[str] = None):
     if debug_path:
         handlers.append("json")
         handlers.append("userlog")
+
     cfg = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -78,7 +97,10 @@ def setup_logger(debug_path: Optional[str] = None):
                 "datefmt": "%Y-%m-%dT%H:%M:%S",
             },
             "json": {
-                "()": JsonLineFormatter,  # custom formatter
+                "()": JsonLineFormatter,
+            },
+            "csv_xy": {
+                "()": CsvXYFormatter,
             },
         },
         "filters": {"only_info": {"()": OnlyLevelFilter, "level": logging.INFO}},
@@ -104,7 +126,7 @@ def setup_logger(debug_path: Optional[str] = None):
                     os.path.expanduser(debug_path) + "/debug.log.jsonl"
                     if debug_path is not None
                     else "log.jsonl"
-                ),  # path relative to working dir
+                ),
                 "mode": "w",
             },
             "userlog": {
@@ -115,26 +137,19 @@ def setup_logger(debug_path: Optional[str] = None):
                     os.path.expanduser(debug_path) + "/debug.log.txt"
                     if debug_path is not None
                     else "log"
-                ),  # path relative to working dir
+                ),
                 "mode": "w",
             },
         },
         "loggers": {
-            "artefacts": {
-                "level": "DEBUG",
-                "handlers": handlers,
-                "propagate": False,
-            },
+            "artefacts": {"level": "DEBUG", "handlers": handlers, "propagate": False},
             "asyncio_for_robotics": {
                 "level": "DEBUG",
                 "handlers": handlers,
                 "propagate": False,
             },
-            "data": {
-                "level": "INFO",
-                "handlers": [],
-                "propagate": False,
-            },
+            "data": {"level": "INFO", "handlers": [], "propagate": False},
+            "graph": {"level": "INFO", "handlers": [], "propagate": False},
         },
     }
     logging.config.dictConfig(cfg)
