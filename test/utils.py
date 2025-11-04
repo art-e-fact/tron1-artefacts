@@ -18,6 +18,26 @@ logger = logging.getLogger("artefacts." + __name__)
 
 gt_log = logging.getLogger("groundtruth")
 
+# pose {
+#   name: "pointfoot_entity"
+#   id: 15
+#   position {
+#     x: 0.23211411816061789
+#     y: 0.00017884603448919649
+#     z: 0.16635816154401506
+#   }
+#   orientation {
+#     x: -8.8417427662779909e-05
+#     y: 0.76929943658213706
+#     z: 7.3429243691027133e-05
+#     w: 0.63888838122547753
+#   }
+# }
+#
+# POSE_START — detects the start of each block: "pose {"
+# NAME_LINE  — captures the entity name: name: "pointfoot_entity"
+# POS_RE     — extracts numeric x,y,z inside position { ... }
+# ORI_RE     — extracts numeric x,y,z,w inside orientation { ... }
 POSE_START = re.compile(r"^\s*pose\s*\{\s*$")
 NAME_LINE = re.compile(r'^\s*name:\s*"([^"]+)"')
 POS_RE = re.compile(
