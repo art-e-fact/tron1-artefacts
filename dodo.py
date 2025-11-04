@@ -228,6 +228,7 @@ def task_download():
                     f"git clone {repo.link} {repo.src_dir} -b {repo.branch} || true"
                 )
             ],
+            "task_dep": ["workspace"],
             "uptodate": [os.path.exists(repo.src_dir)],
             "verbosity": 2,
         }
@@ -371,7 +372,7 @@ def task_rosdep():
             f"bash -lc \"echo 'stamp: {time()}' > {stamps}/.doit_rosdep.stamp\"",
         ],
         "uptodate": [check],
-        "task_dep": ["rosdep:update"]
+        "task_dep": ["rosdep:update", "workspace"]
         + [f"rosdep:{apt_pkg}" for apt_pkg in missing_rosdep],
         "targets": [f"{stamps}/.doit_rosdep.stamp"],
         "verbosity": 2,
@@ -427,7 +428,6 @@ def task_setup():
             "python_venv:create-venv",
             "pydep",
             "rosdep:install",
-            "build",
         ],
         "doc": "End-to-end setup & build.",
     }
