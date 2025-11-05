@@ -16,11 +16,11 @@ ros2: Literal["humble", "jazzy"] = {  # type: ignore
 REPO_SPECS = {
     "limxsdk_python": {
         "url": "https://github.com/art-e-fact/tron1-artefacts-pythonsdk.git",
-        "versions": {"jazzy": "graph_logger", "humble": "main"},
+        "versions": {"jazzy": "main", "humble": "main"},
     },
     "robot-description": {
         "url": "https://github.com/art-e-fact/tron1-artefacts-description.git",
-        "versions": {"jazzy": "main", "humble": "main"},
+        "versions": {"jazzy": "main", "humble": "humble"},
     },
     "robot-visualization": {
         "url": "https://github.com/limxdynamics/robot-visualization.git",
