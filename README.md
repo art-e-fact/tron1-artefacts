@@ -85,20 +85,7 @@ doit build
 ##  3. Usage
 
 - Select robot type
-  - List available robot types via the Shell command tree -L 1 src/robot-description/pointfoot:
-
-    ```
-    src/robot-description/pointfoot
-    ├── PF_P441A
-    ├── PF_P441B
-    ├── PF_P441C
-    ├── PF_P441C2
-    ├── PF_TRON1A
-    ├── SF_TRON1A
-    └── WF_TRON1A
-    ```
-
-  - Taking PF_TRON1A (please replace it according to the actual robot type) as an example, set the robot model type:
+  - Taking PF_TRON1A (the only one compatible with Artefacts now) as an example, set the robot model type:
 
     ```bash
     echo 'export ROBOT_TYPE=PF_TRON1A' >> ~/.bashrc && source ~/.bashrc
@@ -110,24 +97,27 @@ Set the RL_TYPE environmental variable to isaacgym or isaaclab:
 ```bash
 echo 'export RL_TYPE=isaacgym' >> ~/.bashrc && source ~/.bashrc
 ```
+
+Before running anything, do not forget to source your virtual environment and ROS installation.
+
 - Run the RL controller: Do this before the simulation, if you want the robot to start walking, or else it will fall:
 
   ```bash
-  . ~/tron_artefacts_ws/SOURCE.bash
+  source ~/tron_artefacts_ws/venv/bin/activate
   python3 ~/tron_artefacts_ws/src/rl-deploy-python/main.py
   ```
 
 - Run the simulation: You can run the server (no GUI) instead by passing server:=true param:
 
   ```bash
-  . ~/tron_artefacts_ws/SOURCE.bash
+  source ~/tron_artefacts_ws/install/setup.bash
   ros2 launch pointfoot_gazebo empty_world.launch.py server:=false
   ```
 
 - Run the custom controller to move the robot:
 
   ```bash
-  . ~/tron_artefacts_ws/SOURCE.bash
+  source ~/tron_artefacts_ws/venv/bin/activate
   python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
   ```
 ## 4. Testing
@@ -138,14 +128,17 @@ Please ensure that any other active processes (simulators or controllers) are fu
 - Test with Artefacts:
 
   ```bash
-  . ~/tron_artefacts_ws/SOURCE.bash
+  source ~/tron_artefacts_ws/venv/bin/activate
+  source ~/tron_artefacts_ws/install/setup.bash
   artefacts run move_around
   ```
 
 - Test with Pytest:
 
   ```bash
-  bash TEST.bash
+  source ~/tron_artefacts_ws/venv/bin/activate
+  source ~/tron_artefacts_ws/install/setup.bash
+  python3 -m pytest ~/tron_artefacts_ws/test/test_move.py -v -x
   ```
 
 ## Notes
