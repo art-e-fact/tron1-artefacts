@@ -23,7 +23,7 @@ This allows the same installer to seamlessly handle both ecosystems with no manu
 ### Install ROS 2 Jazzy or Humble
 For installation, please follow the official guides below and select **`ros-{ROS_DISTRO}-desktop`**:
 
-[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)  
+[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
 [ROS 2 Humble Installation on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
 ### Install fundamental dependencies
@@ -47,20 +47,20 @@ source bash_completion_doit.bash
 
 Once ROS 2 and system prerequisites are installed, this workspace manages everything else through `doit` tasks.
 
-### Full installation (recommended on first run)
+### Initial setup
 ```bash
 cd ~/tron_artefacts_ws
 doit setup
 ```
-> Installs dependencies, creates the virtual environment, sets up ROS 2 packages, and builds the workspace.
+> Installs dependencies, creates the virtual environment, and sets up ROS 2 packages.
 
 
-### Rebuild the workspace
+### Build the workspace
 ```bash
 cd ~/tron_artefacts_ws
 doit build
 ```
-> Rebuilds all packages in the workspace using `colcon`.
+> Builds all packages in the workspace using `colcon`.
 
 
 ### Update repositories
@@ -68,7 +68,7 @@ doit build
 cd ~/tron_artefacts_ws
 doit download
 ```
-> Pulls, fetches, and updates all repositories defined in the runtime rendered .repos file (depending on the ROS distro). (via `vcstool`).
+> Pulls, fetches, and updates all repositories.
 
 
 ### Full rebuild cycle
@@ -76,45 +76,65 @@ doit download
 cd ~/tron_artefacts_ws
 doit clean
 doit setup
+doit build
 ```
 > Refreshes repositories and rebuilds everything from scratch.
 
 ---
 
-##  3. Usage and testing
+##  3. Usage
 
 - Select robot type
-  - List available robot types via the Shell command tree -L 1 src/robot-description/pointfoot:
-
-    ```
-    src/robot-description/pointfoot
-    ├── PF_P441A
-    ├── PF_P441B
-    ├── PF_P441C
-    ├── PF_P441C2
-    ├── PF_TRON1A
-    ├── SF_TRON1A
-    └── WF_TRON1A
-    ```
-
-  - Taking PF_TRON1A (please replace it according to the actual robot type) as an example, set the robot model type:
+  - Taking PF_TRON1A (the only one compatible with Artefacts now) as an example, set the robot model type:
 
     ```bash
     echo 'export ROBOT_TYPE=PF_TRON1A' >> ~/.bashrc && source ~/.bashrc
     ```
 
-- Run the simulation: You can set the use_support parameter of the empty_world.launch.py file to true, and execute the following Shell command to run the simulation:
+Before running anything, do not forget to source your virtual environment and ROS installation.
+
+- Run the RL controller: Do this before the simulation, if you want the robot to start walking, or else it will fall:
+
+  - Select the trained policy: Set the RL_TYPE environmental variable to isaacgym or isaaclab:
+
+    ```bash
+    export RL_TYPE=isaacgym
+    source ~/tron_artefacts_ws/venv/bin/activate
+    python3 ~/tron_artefacts_ws/src/rl-deploy-python/main.py
+    ```
+
+- Run the simulation: You can run the server (no GUI) instead by passing server:=true param:
 
   ```bash
   source ~/tron_artefacts_ws/install/setup.bash
-  ros2 launch pointfoot_gazebo empty_world.launch.py
+  ros2 launch pointfoot_gazebo empty_world.launch.py server:=false
   ```
 
-- Run the control routine to ensure that the robot in the simulator is moving, indicating that the simulation environment has been successfully set up:
+- Run the custom controller to move the robot:
 
   ```bash
+  source ~/tron_artefacts_ws/venv/bin/activate
+  python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
+  ```
+## 4. Testing
+NOTE: Do not manually launch any processes before running the test.
+The test script will automatically collect and launch all necessary components.
+Please ensure that any other active processes (simulators or controllers) are fully terminated beforehand.
+
+- Test with Artefacts:
+
+  ```bash
+  source ~/tron_artefacts_ws/venv/bin/activate
   source ~/tron_artefacts_ws/install/setup.bash
-  ros2 run limxsdk_python example
+  artefacts run move_around
+  ```
+
+- Test with Pytest:
+
+  ```bash
+  source ~/tron_artefacts_ws/venv/bin/activate
+  source ~/tron_artefacts_ws/install/setup.bash
+  python3 -m pytest ~/tron_artefacts_ws/test/test_move.py -v -x
   ```
 
 ## Notes
