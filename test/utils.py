@@ -254,12 +254,18 @@ def pointfoot(test_report_dir):
     logger.debug(f"{prefix}finished")
 
 
-def pointfoot_rl_controller(module_report_dir):
+def pointfoot_rl_controller(module_report_dir, rl_type: str | None = None):
     p_name = "pointfoot_rl_controller"
     prefix = f"STARTUP [{p_name}]: "
     report_abs = module_report_dir
     stdout_file = open(f"{report_abs}/ctrl_stdout.txt", "wb")
     stderr_file = open(f"{report_abs}/ctrl_stderr.txt", "wb")
+
+    env = os.environ.copy()
+    selected = (rl_type or env.get("RL_TYPE") or "isaacgym").lower()
+    env["RL_TYPE"] = selected
+    logger.debug(f"{prefix}RL_TYPE={selected}")
+
     p = subprocess.Popen(
         [
             "python3",
@@ -268,6 +274,7 @@ def pointfoot_rl_controller(module_report_dir):
         stdout=stdout_file,
         stderr=stderr_file,
         preexec_fn=os.setsid,  # create a new process group/session
+        env=env,
     )
     logger.debug(f"{prefix}process launching [{p.args}]")
     logger.debug(f"{prefix}tests starting")

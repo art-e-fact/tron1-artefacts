@@ -125,7 +125,11 @@ def record_bag(test_report_dir, pointfoot, gz_bridge, sdk_bridge):
 
 @pytest.fixture(scope="module", autouse=True)
 def pointfoot_rl_controller(module_report_dir: str):
-    yield from utils.pointfoot_rl_controller(module_report_dir)
+    artefacts_params = get_artefacts_params()
+    rl_type = artefacts_params.get("rl_type", None)
+    if isinstance(rl_type, str):
+        rl_type = rl_type.lower()
+    yield from utils.pointfoot_rl_controller(module_report_dir, rl_type)
 
 
 @pytest.fixture(scope="function", autouse=True)
