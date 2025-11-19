@@ -1,9 +1,19 @@
 import logging
 import os
+import shutil
 from datetime import datetime
 
 import pytest
 from logger import CsvXYFileHandler, JsonLineFormatter, setup_logger
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_output():
+    """Clean output directory at the start of each test session."""
+    if os.path.exists("output"):
+        shutil.rmtree("output")
+    os.makedirs("output")
+    yield
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -61,7 +71,8 @@ def switch_test_graph(test_report_dir: str):
             logger.removeHandler(h)
             h.close()
 
-    file_path = f"{test_report_dir}/trajectory_rel.csv"
+    os.makedirs("output", exist_ok=True)
+    file_path = "output/trajectory_rel.csv"
     h = CsvXYFileHandler(file_path, mode="w")
     h.setLevel(logging.INFO)
     logger.addHandler(h)
@@ -76,7 +87,8 @@ def switch_test_graph_gt(test_report_dir: str):
             lg.removeHandler(h)
             h.close()
 
-    file_path = f"{test_report_dir}/trajectory_gt.csv"
+    os.makedirs("output", exist_ok=True)
+    file_path = "output/trajectory_gt.csv"
     h = CsvXYFileHandler(file_path, mode="w")
     h.setLevel(logging.INFO)
     lg.addHandler(h)
