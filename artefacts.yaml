@@ -1,4 +1,4 @@
-project: tron1-artefacts/tron1-artefacts
+project: artefacts-demos/tron1-demo
 version: 0.1.0
 
 jobs:
@@ -9,7 +9,7 @@ jobs:
       simulator: gazebo:harmonic
     scenarios:
       defaults:
-        output_dirs: ["test_report/latest/"]
+        output_dirs: ["test_report/latest/", "output"]
         pytest_file: test/art_test_move.py
       settings:
         - name: move
