@@ -30,7 +30,7 @@ jobs:
       simulator: gazebo:harmonic
     scenarios:
       defaults:
-        output_dirs: ["test_report/latest/"]
+        output_dirs: ["test_report/latest/", "output"]
         pytest_file: test/art_test_move.py
       settings:
         - name: move_face_with_different_policies
