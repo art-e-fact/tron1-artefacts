@@ -222,19 +222,9 @@ def test_idle_drift(gz_groundtruth, session_report_dir):
         )
 
     metric_file = "output/metrics.json"
-    existing = []
-    if os.path.exists(metric_file):
-        try:
-            with open(metric_file, "r") as f:
-                existing = json.load(f)
-            if not isinstance(existing, list):
-                existing = []
-        except Exception:
-            existing = []
 
-    existing.append(metrics_entry)
+    to_write = json.dumps(metrics_entry)
 
     with open(metric_file, "w") as f:
-        json.dump(existing, f, indent=2)
-
-    logger.debug(f"metrics written in {metric_file}")
+        f.write(to_write)
+        logger.debug(f"metrics written in {metric_file}")
