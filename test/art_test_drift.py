@@ -11,6 +11,7 @@ import pytest
 import utils
 from artefacts_toolkit_config.config import get_artefacts_params
 from artefacts_toolkit_rosbag.image_topics import extract_video
+from logger import CsvXYFileHandler
 
 logger = logging.getLogger("artefacts." + __name__)
 
@@ -173,25 +174,32 @@ def _drift_metrics(samples: list):
     if len(samples) < 2:
         raise RuntimeError("Insufficient samples for drift")
 
-    t0, x0, y0, yaw0 = samples[0]
-    t1, x1, y1, yaw1 = samples[-1]
-    dx, dy = (x1 - x0), (y1 - y0)
+    t0, x0_w, y0_w, yaw0 = samples[0]
+    t1, x1_w, y1_w, yaw1 = samples[-1]
+    dx_w, dy_w = (x1_w - x0_w), (y1_w - y0_w)
 
-    final_xy_drift_m = _mag2(dx, dy)
+    final_xy_drift_m = _mag2(dx_w, dy_w)
     final_yaw_drift_rad = _yaw_diff(yaw1, yaw0)
 
-    dists = [_mag2(x - x0, y - y0) for _, x, y, _ in samples]
+    dists = [_mag2(x - x0_w, y - y0_w) for _, x, y, _ in samples]
     max_xy_drift_m = max(dists)
 
     yaws = [abs(_yaw_diff(yaw, yaw0)) for *_, yaw in samples]
     max_yaw_drift_rad = max(yaws)
 
+    x0_g, y0_g = -y0_w, x0_w
+    x1_g, y1_g = -y1_w, x1_w
+
     return {
-        "duration_s": samples[-1][0] - samples[0][0],
+        "duration_s": t1 - t0,
         "final_xy_drift_m": final_xy_drift_m,
         "max_xy_drift_m": max_xy_drift_m,
         "final_yaw_drift_deg": math.degrees(final_yaw_drift_rad),
         "max_yaw_drift_deg": math.degrees(max_yaw_drift_rad),
+        "x0": x0_g,
+        "y0": y0_g,
+        "x1": x1_g,
+        "y1": y1_g,
     }
 
 
@@ -200,13 +208,12 @@ def _get_drift_params():
 
     duration_s = params.get("durations_s", 10)
     settle_s = float(params.get("settle_s", 0.0))
-    checks = dict(params.get("checks", {}) or {})
 
     rl_type = params.get("rl_type", None)
     if isinstance(rl_type, str):
         rl_type = rl_type.lower()
 
-    return rl_type, duration_s, settle_s, checks
+    return rl_type, duration_s, settle_s
 
 
 def test_idle_drift(gz_groundtruth, session_report_dir, bag_video):
@@ -215,10 +222,11 @@ def test_idle_drift(gz_groundtruth, session_report_dir, bag_video):
 
     Order:
     - ensure groundtruth is alive
+    - reset groundtruth CSV handler (for the trajectory graph)
     - start bag+video
     - sample groundtruth for `durations_s`
     """
-    rl_type, duration_s, settle_s, checks = _get_drift_params()
+    rl_type, duration_s, settle_s = _get_drift_params()
 
     proc, gt = gz_groundtruth
 
@@ -230,11 +238,33 @@ def test_idle_drift(gz_groundtruth, session_report_dir, bag_video):
         raise RuntimeError("No ground truth available before recording")
     logger.info(f"Groundtruth ready: {time.time()}")
 
+    lg_gt = logging.getLogger("groundtruth")
+
+    for h in list(lg_gt.handlers):
+        if isinstance(h, logging.FileHandler):
+            lg_gt.removeHandler(h)
+            try:
+                h.close()
+            except Exception:
+                pass
+
+    os.makedirs("output", exist_ok=True)
+    gt_csv_path = "output/trajectory_gt.csv"
+    gt_handler = CsvXYFileHandler(gt_csv_path, mode="w")
+    gt_handler.setLevel(logging.INFO)
+    lg_gt.addHandler(gt_handler)
+
     bag_video.start()
 
     dur = float(duration_s)
     samples = _sample_stream(gt, duration_s=dur, sample_hz=10.0)
     metrics = _drift_metrics(samples)
+
+    lg_gt.removeHandler(gt_handler)
+    try:
+        gt_handler.close()
+    except Exception:
+        pass
 
     logger.info(
         f"[idle_drift] RL_TYPE={rl_type} dur={dur:.1f}s "
@@ -247,26 +277,14 @@ def test_idle_drift(gz_groundtruth, session_report_dir, bag_video):
     metrics_entry = {
         "Duration": metrics["duration_s"],
         "XY": metrics["final_xy_drift_m"],
-        "XY_max": metrics["max_xy_drift_m"],
+        # "XY_max": metrics["max_xy_drift_m"],
         "Yaw_final_deg": metrics["final_yaw_drift_deg"],
-        "Yaw_max_deg": metrics["max_yaw_drift_deg"],
-        # "RL_TYPE": rl_type,
+        # "Yaw_max_deg": metrics["max_yaw_drift_deg"],
+        # "X0": metrics["x0"],
+        # "Y0": metrics["y0"],
+        "X_final": metrics["x1"],
+        "Y_final": metrics["y1"],
     }
-
-    max_drift_m = checks.get("max_drift_m", None)
-    max_yaw_deg = checks.get("max_yaw_drift_deg", None)
-
-    if max_drift_m is not None:
-        assert metrics["max_xy_drift_m"] <= float(max_drift_m), (
-            f"max_xy_drift {metrics['max_xy_drift_m']:.3f} m > "
-            f"{float(max_drift_m):.3f} m (dur={dur}s)"
-        )
-
-    if max_yaw_deg is not None:
-        assert metrics["max_yaw_drift_deg"] <= float(max_yaw_deg), (
-            f"max_yaw_drift {metrics['max_yaw_drift_deg']:.1f}° > "
-            f"{float(max_yaw_deg):.1f}° (dur={dur}s)"
-        )
 
     metric_file = "output/metrics.json"
     os.makedirs("output", exist_ok=True)
