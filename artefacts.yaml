@@ -46,7 +46,6 @@ jobs:
     scenarios:
       defaults:
         output_dirs: ["test_report/latest/", "output"]
-        # output_path: "test_report/latest"
         metrics: "output/metrics.json"
         pytest_file: test/art_test_drift.py
       settings:
