@@ -1,4 +1,4 @@
-project: artefacts-demos/tron1-demo
+project: tron1-artefacts/tron1-artefacts
 version: 0.1.0
 
 jobs:
@@ -23,3 +23,33 @@ jobs:
               - {name: "dyaw_150+fw_5m", forward_m: 5.0, dyaw_deg: 150, hold: false, timeout_s: 35}
               - {name: "hold", forward_m: 3.5, dyaw_deg: 45, hold: true, hold_timeout_s: 3.5, timeout_s: 35}
               - {name: "timeout", forward_m: 0.0, dyaw_deg: 170, hold: false, timeout_s: 0.2}
+  policy_test:
+    type: test
+    runtime:
+      framework: ros2:jazzy
+      simulator: gazebo:harmonic
+    scenarios:
+      defaults:
+        output_dirs: ["test_report/latest/", "output"]
+        pytest_file: test/art_test_move.py
+      settings:
+        - name: move_face_with_different_policies
+          params:
+            rl_type: ["isaacgym", "isaaclab"]
+            move_face:
+              - {name: "dyaw_150+fw_5m", forward_m: 5.0, dyaw_deg: 150, hold: false, timeout_s: 35}
+  policy_drift:
+    type: test
+    runtime:
+      framework: ros2:jazzy
+      simulator: gazebo:harmonic
+    scenarios:
+      defaults:
+        output_dirs: ["test_report/latest/", "output"]
+        metrics: "output/metrics.json"
+        pytest_file: test/art_test_drift.py
+      settings:
+        - name: idle_drift_compare_policies
+          params:
+            rl_type: ["isaacgym", "isaaclab"]
+            durations_s: [10, 15]

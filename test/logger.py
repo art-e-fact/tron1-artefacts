@@ -40,12 +40,28 @@ class CsvXYFormatter(logging.Formatter):
 
 
 class CsvXYFileHandler(logging.FileHandler):
-    def __init__(self, filename, mode="w", encoding="utf-8", delay=False):
+    def __init__(self, filename, mode="w", encoding="utf-8", delay=True):
         super().__init__(filename, mode=mode, encoding=encoding, delay=delay)
-        if not delay:
-            self.stream.write("x,y\n")
-            self.stream.flush()
         self.setFormatter(CsvXYFormatter())
+        self._wrote_header = False
+
+    def emit(self, record: logging.LogRecord):
+        try:
+            msg = self.format(record)
+            if not msg:
+                return
+
+            if self.stream is None:
+                self.stream = self._open()
+
+            if not self._wrote_header:
+                self.stream.write("x,y\n")
+                self._wrote_header = True
+
+            self.stream.write(msg + self.terminator)
+            self.flush()
+        except Exception:
+            self.handleError(record)
 
 
 LEVEL_COLORS = {
