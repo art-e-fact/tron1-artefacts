@@ -320,8 +320,6 @@ def bag_recorder(topic_names: List[str], directory="rosbags", use_sim_time=False
     logger.debug("stopping rosbag")
     with ignore_int():
         finish_process(p)
-    # wait for rosbag to close files
-    # time.sleep(5.0)
     logger.debug("rosbag closed")
 
 

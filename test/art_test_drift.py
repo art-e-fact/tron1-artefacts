@@ -276,12 +276,8 @@ def test_idle_drift(gz_groundtruth, session_report_dir, bag_video):
 
     metrics_entry = {
         "Duration": metrics["duration_s"],
-        "XY": metrics["final_xy_drift_m"],
-        # "XY_max": metrics["max_xy_drift_m"],
+        "XY_final": metrics["final_xy_drift_m"],
         "Yaw_final_deg": metrics["final_yaw_drift_deg"],
-        # "Yaw_max_deg": metrics["max_yaw_drift_deg"],
-        # "X0": metrics["x0"],
-        # "Y0": metrics["y0"],
         "X_final": metrics["x1"],
         "Y_final": metrics["y1"],
     }
