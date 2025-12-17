@@ -52,4 +52,4 @@ jobs:
         - name: idle_drift_compare_policies
           params:
             rl_type: ["isaacgym", "isaaclab"]
-            durations_s: [10, 15]
+            durations_s: [10, 60]

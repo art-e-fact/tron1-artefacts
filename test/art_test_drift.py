@@ -128,7 +128,6 @@ def bag_video(test_report_dir):
             next(bag_gen)
         with suppress(StopIteration):
             next(vid_gen)
-        logger.info(f"Actual end of the video recording: {time.time()}")
 
         logger.debug("Making videos in output")
         os.makedirs("output", exist_ok=True)
