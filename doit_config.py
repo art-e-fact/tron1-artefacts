@@ -27,7 +27,7 @@ REPO_SPECS = {
         "versions": {"jazzy": "master", "humble": "master"},
     },
     "robot-gazebo": {
-        "url": "git@github.com:art-e-fact/tron1-artefacts-demo.git",
+        "url": "git@github.com:art-e-fact/tron1-artefacts-sim.git",
         "versions": {"jazzy": "main", "humble": "humble"},
     },
     "rl-deploy-python": {

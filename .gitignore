@@ -10,3 +10,4 @@ src/
 stamps/
 venv/
 test_report/
+output/

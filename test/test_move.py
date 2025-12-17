@@ -50,14 +50,14 @@ def record_bag(test_report_dir, pointfoot, gz_bridge, sdk_bridge):
         next(bag_gen)
     with suppress(StopIteration):
         next(vid_gen)
-    logger.debug(f"Making videos in {test_report_dir}/video")
-    os.makedirs(f"{test_report_dir}/video")
+    logger.debug(f"Making videos in output")
+    os.makedirs("output", exist_ok=True)
     for topic_name, filename in [
         ("/pointfoot/fpv/image", "fpv"),
         ("/pointfoot/bird/image", "birdeye"),
     ]:
         logger.debug(f"videoing topic {topic_name}")
-        extract_video(vid_path, topic_name, f"{test_report_dir}/video/{filename}")
+        extract_video(vid_path, topic_name, f"output/{filename}")
     #     # time.sleep(2)
     logger.debug(f"Removing heavy video bag")
     shutil.rmtree(vid_dir, ignore_errors=True)
