@@ -28,6 +28,10 @@ jobs:
     runtime:
       framework: ros2:jazzy
       simulator: gazebo:harmonic
+    package:
+      docker:
+        build:
+          dockerfile: ./Dockerfile
     scenarios:
       defaults:
         output_dirs: ["test_report/latest/", "output"]
@@ -43,6 +47,10 @@ jobs:
     runtime:
       framework: ros2:jazzy
       simulator: gazebo:harmonic
+    package:
+      docker:
+        build:
+          dockerfile: ./Dockerfile
     scenarios:
       defaults:
         output_dirs: ["test_report/latest/", "output"]
