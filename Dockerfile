@@ -1,4 +1,4 @@
-FROM public.ecr.aws/artefacts/ros2:jazzy-harmonic-gpu-0.9.9
+FROM public.ecr.aws/artefacts/ros2:jazzy-harmonic-gpu-0.11.0
 
 ENV ROBOT_TYPE=PF_TRON1A
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -15,7 +15,6 @@ RUN apt update -y && \
 
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install -r /ws/requirements.txt && \
-    python3 -m pip install --upgrade artefacts-cli
 
 RUN source /opt/ros/jazzy/setup.bash && \
     rosdep update && \
