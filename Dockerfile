@@ -14,7 +14,7 @@ RUN apt update -y && \
       ros-jazzy-rmw-zenoh-cpp
 
 RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install -r /ws/requirements.txt && \
+    python3 -m pip install -r /ws/requirements.txt
 
 RUN source /opt/ros/jazzy/setup.bash && \
     rosdep update && \

@@ -1,4 +1,6 @@
-project: artefacts-demos/tron1-demo
+# project: artefacts-demos/tron1-demo
+project: tron1-artefacts/tron1-artefacts
+
 version: 0.1.0
 
 jobs:
@@ -7,6 +9,10 @@ jobs:
     runtime:
       framework: ros2:jazzy
       simulator: gazebo:harmonic
+    package:
+      docker:
+        build:
+          dockerfile: ./Dockerfile
     scenarios:
       defaults:
         output_dirs: ["test_report/latest/", "output"]
