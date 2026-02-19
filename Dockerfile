@@ -10,7 +10,7 @@ WORKDIR /ws
 COPY requirements.txt artefacts.yaml /ws/
 COPY test/ /ws/test/
 
-# Clone public repos into src/
+# Dependent packages
 RUN mkdir -p /ws/src && \
     git clone --depth 1 -b main https://github.com/art-e-fact/tron1-artefacts-pythonsdk.git /ws/src/limxsdk_python && \
     git clone --depth 1 -b main https://github.com/art-e-fact/tron1-artefacts-description.git /ws/src/robot-description && \
