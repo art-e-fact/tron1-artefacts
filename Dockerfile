@@ -5,8 +5,19 @@ ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 SHELL ["/bin/bash", "-lc"]
 
-COPY . /ws
 WORKDIR /ws
+
+COPY requirements.txt artefacts.yaml /ws/
+COPY test/ /ws/test/
+
+# Dependent packages
+RUN mkdir -p /ws/src && \
+    git clone --depth 1 -b main https://github.com/art-e-fact/tron1-artefacts-pythonsdk.git /ws/src/limxsdk_python && \
+    git clone --depth 1 -b main https://github.com/art-e-fact/tron1-artefacts-description.git /ws/src/robot-description && \
+    git clone --depth 1 -b master https://github.com/limxdynamics/robot-visualization.git /ws/src/robot-visualization && \
+    git clone --depth 1 -b main https://github.com/art-e-fact/tron1-artefacts-sim.git /ws/src/robot-gazebo && \
+    git clone --depth 1 -b main https://github.com/art-e-fact/tron1-rl-deploy-artefacts.git /ws/src/rl-deploy-python && \
+    git clone --depth 1 -b main https://github.com/limxdynamics/robot-joystick.git /ws/src/robot-joystick
 
 RUN apt update -y && \
     apt install -y --no-install-recommends \
