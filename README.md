@@ -107,7 +107,7 @@ Before running anything, do not forget to source your virtual environment and RO
 
   ```bash
   source ~/tron_artefacts_ws/install/setup.bash
-  ros2 launch pointfoot_gazebo empty_world.launch.py server:=false
+  ros2 launch pointfoot_gazebo gazebo.launch.py server:=false
   ```
 
 - Run the custom controller to move the robot:
@@ -123,11 +123,30 @@ Please ensure that any other active processes (simulators or controllers) are fu
 
 - Test with Artefacts:
 
+  Before running any experiments, activate the virtual environment and source the workspace:
+
   ```bash
   source ~/tron_artefacts_ws/venv/bin/activate
   source ~/tron_artefacts_ws/install/setup.bash
-  artefacts run move_around
   ```
+
+  - Relative motion execution test:
+
+    ```bash
+    artefacts run move_around
+    ```
+
+  - Relative command policy comparison:
+
+    ```bash
+    artefacts run policy_test
+    ```
+
+  - Idle drift evaluation:
+
+    ```bash
+    artefacts run policy_drift
+    ```
 
 - Test with Pytest:
 
