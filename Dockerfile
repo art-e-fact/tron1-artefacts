@@ -1,4 +1,4 @@
-FROM public.ecr.aws/artefacts/ros2:jazzy-harmonic-gpu-0.11.0
+FROM public.ecr.aws/artefacts/ros2:jazzy-harmonic-gpu-0.12.0
 
 ENV ROBOT_TYPE=PF_TRON1A
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
