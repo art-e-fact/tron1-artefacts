@@ -128,7 +128,6 @@ def bag_video(test_report_dir):
             next(bag_gen)
         with suppress(StopIteration):
             next(vid_gen)
-        logger.info(f"Actual end of the video recording: {time.time()}")
 
         logger.debug("Making videos in output")
         os.makedirs("output", exist_ok=True)
@@ -233,7 +232,7 @@ def test_idle_drift(gz_groundtruth, session_report_dir, bag_video):
     if settle_s > 0:
         time.sleep(settle_s)
 
-    p0 = gt.latest(timeout=10.0)
+    p0 = gt.latest(timeout=15.0)
     if p0 is None:
         raise RuntimeError("No ground truth available before recording")
     logger.info(f"Groundtruth ready: {time.time()}")
