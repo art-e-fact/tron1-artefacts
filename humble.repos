@@ -1,0 +1,25 @@
+repositories:
+  limxsdk_python:
+    type: git
+    url: git@github.com:art-e-fact/tron1-artefacts-pythonsdk.git
+    version: main
+  robot-description:
+    type: git
+    url: git@github.com:art-e-fact/tron1-artefacts-description.git
+    version: humble
+  robot-visualization:
+    type: git
+    url: git@github.com:limxdynamics/robot-visualization.git
+    version: master
+  robot-gazebo:
+    type: git
+    url: git@github.com:art-e-fact/tron1-artefacts-sim.git
+    version: humble
+  rl-deploy-python:
+    type: git
+    url: git@github.com:art-e-fact/tron1-rl-deploy-artefacts.git
+    version: main
+  robot-joystick:
+    type: git
+    url: git@github.com:limxdynamics/robot-joystick.git
+    version: main

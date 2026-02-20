@@ -6,79 +6,80 @@ A demo project using the **Limx Tron1 Robot** with **Artefacts**, **ROS 2**, and
 
 ## Overview
 
-This workspace serves as a **unified installer** for the Tron1 simulation and development environment.
-It automates everything, from dependency installation and virtual environment setup, to pulling repositories and building the entire ROS 2 workspace, using a single command interface powered by [`doit`](https://pydoit.org/).
-It supports both **ROS 2 Humble** and **ROS 2 Jazzy**, automatically detecting your installed distribution and configuring everything accordingly:
+This workspace provides a Tron1 simulation and development environment using a standard ROS 2 workflow.
 
-- **Humble**: Installs and configures **Ignition Fortress**
-- **Jazzy**: Installs and configures **Gazebo Harmonic**
+It supports both **ROS 2 Humble** (Ubuntu 22.04) and **ROS 2 Jazzy** (Ubuntu 24.04):
 
-This allows the same installer to seamlessly handle both ecosystems with no manual changes required.
-
+- **Humble**: Uses **Ignition Fortress**
+- **Jazzy**: Uses **Gazebo Harmonic**
 
 ---
 
-## 1. Set Up the Development Environment
+## 1. Prerequisites
 
-### Install ROS 2 Jazzy or Humble
-For installation, please follow the official guides below and select **`ros-{ROS_DISTRO}-desktop`**:
+### Install ROS 2
 
-[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
-[ROS 2 Humble Installation on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+Follow the official installation guide for your Ubuntu version:
 
-### Install fundamental dependencies
+- [ROS 2 Jazzy on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
+- [ROS 2 Humble on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+
+Install the `ros-{ROS_DISTRO}-desktop` package.
+
+### Install tools
+
 ```bash
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt install python3-pip python3-doit git
+sudo apt update
+sudo apt install python3-pip python3-vcstool python3-colcon-common-extensions python3-rosdep git
 ```
 
-###  Clone the repository (preferably into ~/tron_artefacts_ws)
+---
+
+## 2. Setup
+
+### Clone this repository
+
 ```bash
 git clone https://github.com/art-e-fact/tron1-artefacts.git ~/tron_artefacts_ws
 cd ~/tron_artefacts_ws
-doit tabcompletion > bash_completion_doit.bash
-source bash_completion_doit.bash
 ```
 
----
+### Import dependencies
 
-## 2. Using the Unified Installer
-
-Once ROS 2 and system prerequisites are installed, this workspace manages everything else through `doit` tasks.
-
-### Initial setup
 ```bash
-cd ~/tron_artefacts_ws
-doit setup
+# For Jazzy:
+vcs import src < jazzy.repos
+
+# For Humble:
+vcs import src < humble.repos
 ```
-> Installs dependencies, creates the virtual environment, and sets up ROS 2 packages.
 
+### Create Python virtual environment
 
-### Build the workspace
 ```bash
-cd ~/tron_artefacts_ws
-doit build
+python3 -m venv --system-site-packages venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
-> Builds all packages in the workspace using `colcon`.
 
+### Install ROS dependencies
 
-### Update repositories
 ```bash
-cd ~/tron_artefacts_ws
-doit download
+source /opt/ros/$ROS_DISTRO/setup.bash
+sudo rosdep init  # only needed once
+rosdep update
+rosdep install --from-paths src --ignore-src -y
 ```
-> Pulls, fetches, and updates all repositories.
 
+### Build
 
-### Full rebuild cycle
 ```bash
-cd ~/tron_artefacts_ws
-doit clean
-doit setup
-doit build
+source venv/bin/activate
+source /opt/ros/$ROS_DISTRO/setup.bash
+colcon build --symlink-install
 ```
-> Refreshes repositories and rebuilds everything from scratch.
+
 
 ---
 
@@ -139,4 +140,13 @@ Please ensure that any other active processes (simulators or controllers) are fu
 
 ## Notes
 
-- Use `doit list` to see all available commands.
+- Use `vcs status src` to check repo status across all dependencies.
+- Use `vcs pull src` to update dependent repos
+- `rm -rf build install log` followed by `colcon build --symlink-install` for a clean rebuild
+
+### Clean rebuild
+
+```bash
+rm -rf build install log
+colcon build --symlink-install
+```
