@@ -116,20 +116,13 @@ Please ensure that any other active processes (simulators or controllers) are fu
 
 
 - Test with Artefacts:
-
-  Three tests have been provided for you to try out:
-    1. move_around
-    2. policy_test
-    3. policy_drift
-
-  See the `artefacts.yaml` in the root of this repository file for details
-
+  
+  Setup the environment:
   ```bash
   source venv/bin/activate
   source install/setup.bash
-  artefacts run test_policy
   ```
-
+  
   - Relative motion execution test:
 
     ```bash
@@ -161,4 +154,3 @@ Please ensure that any other active processes (simulators or controllers) are fu
 - Use `vcs status src` to check repo status across all dependencies.
 - Use `vcs pull src` to update dependent repos
 - `rm -rf build install log` followed by `colcon build --symlink-install` for a clean rebuild
-- a clean rebuild can be done with `rm -rf build install log` followed by `colcon build --symlink-install`
