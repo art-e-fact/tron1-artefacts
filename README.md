@@ -130,6 +130,24 @@ Please ensure that any other active processes (simulators or controllers) are fu
   artefacts run test_policy
   ```
 
+  - Relative motion execution test:
+
+    ```bash
+    artefacts run move_around
+    ```
+
+  - Relative command policy comparison:
+
+    ```bash
+    artefacts run policy_test
+    ```
+
+  - Idle drift evaluation:
+
+    ```bash
+    artefacts run policy_drift
+    ```
+
 - Test with Pytest:
 
   ```bash
