@@ -40,18 +40,17 @@ sudo apt install python3-pip python3-vcstool python3-colcon-common-extensions py
 ### Clone this repository
 
 ```bash
-git clone https://github.com/art-e-fact/tron1-artefacts.git ~/tron_artefacts_ws
-cd ~/tron_artefacts_ws
+git clone https://github.com/art-e-fact/tron1-artefacts.git
+cd tron1-artefacts
 ```
 
 ### Import dependencies
 
 ```bash
 # For Jazzy:
-vcs import src < jazzy.repos
-
+mkdir src && vcs import src < jazzy.repos
 # For Humble:
-vcs import src < humble.repos
+mkdir src && vcs import src < humble.repos
 ```
 
 ### Create Python virtual environment
@@ -59,21 +58,20 @@ vcs import src < humble.repos
 ```bash
 python3 -m venv --system-site-packages venv
 source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+pip install --upgrade pip && pip install -r requirements.txt
 ```
 
 ### Install ROS dependencies
-
+(Replace `.bash` with the shell you are using (e.g. `.zsh`))
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
-sudo rosdep init  # only needed once
+sudo rosdep init  # Only required when using rosdep for the first time
 rosdep update
 rosdep install --from-paths src --ignore-src -y
 ```
 
 ### Build
-
+(Replace `.bash` with the shell you are using (e.g. `.zsh`))
 ```bash
 source venv/bin/activate
 source /opt/ros/$ROS_DISTRO/setup.bash
@@ -85,57 +83,60 @@ colcon build --symlink-install
 
 ##  3. Usage
 
-- Select robot type
-  - Taking PF_TRON1A (the only one compatible with Artefacts now) as an example, set the robot model type:
+* You will need three sessions to run a full simulation: 1. The RL Controller, 2. The simulation, and 3. The custom controller
 
-    ```bash
-    echo 'export ROBOT_TYPE=PF_TRON1A' >> ~/.bashrc && source ~/.bashrc
-    ```
-
-Before running anything, do not forget to source your virtual environment and ROS installation.
-
-- Run the RL controller: Do this before the simulation, if you want the robot to start walking, or else it will fall:
-
-  - Select the trained policy: Set the RL_TYPE environmental variable to isaacgym or isaaclab:
-
-    ```bash
-    export RL_TYPE=isaacgym
-    source ~/tron_artefacts_ws/venv/bin/activate
-    python3 ~/tron_artefacts_ws/src/rl-deploy-python/main.py
-    ```
-
-- Run the simulation: You can run the server (no GUI) instead by passing server:=true param:
-
+1. Run the RL Controller:  Do this before the simulation, if you want the robot to start walking, or else it will fall:
   ```bash
-  source ~/tron_artefacts_ws/install/setup.bash
-  ros2 launch pointfoot_gazebo empty_world.launch.py server:=false
+  export ROBOT_TYPE=PF_TRON1A # Set the robot model type (only PF_TRON1A compatible with artefacts)
+  export RL_TYPE=isaacgym # or isaaclab
+  source venv/bin/activate
+  python3 src/rl-deploy-python/main.py
   ```
 
-- Run the custom controller to move the robot:
+2. Run the Simulation
+  ```bash
+  export ROBOT_TYPE=PF_TRON1A
+  source venv/bin/activate
+  source install/setup.bash # or e.g. .zsh
+  ros2 launch pointfoot_gazebo empty_world.launch.py server:=false # or true to run headlessly 
+  ```
+
+3. Run the custom controller to move the robot:
 
   ```bash
-  source ~/tron_artefacts_ws/venv/bin/activate
-  python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
+  export ROBOT_TYPE=PF_TRON1A
+  source venv/bin/activate
+  source install/setup.bash
+  python3 src/limxsdk_python/limxsdk_python/api/goto.py
   ```
+
 ## 4. Testing
 NOTE: Do not manually launch any processes before running the test.
 The test script will automatically collect and launch all necessary components.
 Please ensure that any other active processes (simulators or controllers) are fully terminated beforehand.
 
+
 - Test with Artefacts:
 
+  Three tests have been provided for you to try out:
+    1. move_around
+    2. policy_test
+    3. policy_drift
+
+  See the `artefacts.yaml` in the root of this repository file for details
+
   ```bash
-  source ~/tron_artefacts_ws/venv/bin/activate
-  source ~/tron_artefacts_ws/install/setup.bash
-  artefacts run move_around
+  source venv/bin/activate
+  source install/setup.bash
+  artefacts run test_policy
   ```
 
 - Test with Pytest:
 
   ```bash
-  source ~/tron_artefacts_ws/venv/bin/activate
-  source ~/tron_artefacts_ws/install/setup.bash
-  python3 -m pytest ~/tron_artefacts_ws/test/test_move.py -v -x
+  source venv/bin/activate
+  source install/setup.bash
+  python3 -m pytest test/test_move.py -v -x
   ```
 
 ## Notes
@@ -143,10 +144,4 @@ Please ensure that any other active processes (simulators or controllers) are fu
 - Use `vcs status src` to check repo status across all dependencies.
 - Use `vcs pull src` to update dependent repos
 - `rm -rf build install log` followed by `colcon build --symlink-install` for a clean rebuild
-
-### Clean rebuild
-
-```bash
-rm -rf build install log
-colcon build --symlink-install
-```
+- a clean rebuild can be done with `rm -rf build install log` followed by `colcon build --symlink-install`
