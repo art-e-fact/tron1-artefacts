@@ -78,7 +78,6 @@ source /opt/ros/$ROS_DISTRO/setup.bash
 colcon build --symlink-install
 ```
 
-
 ---
 
 ##  3. Usage
