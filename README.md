@@ -117,6 +117,9 @@ Before running anything, do not forget to source your virtual environment and RO
   python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
   ```
 ## 4. Testing
+
+### Local
+
 NOTE: Do not manually launch any processes before running the test.
 The test script will automatically collect and launch all necessary components.
 Please ensure that any other active processes (simulators or controllers) are fully terminated beforehand.
@@ -156,6 +159,25 @@ Please ensure that any other active processes (simulators or controllers) are fu
   python3 -m pytest ~/tron_artefacts_ws/test/test_move.py -v -x
   ```
 
+### Containerized (Docker)
+
+The tests can be ran with artefacts in a container, either locally, or on the artefacts platform.
+
+1. Locally (`--in-container`)
+
+Note: Requires a gpu that is available to Docker.
+
+```
+# "policy_test" can be changed for any of the other tests (e.g policy_drift)
+artefacts run --in-container policy_test --gpus=all
+```
+
+2. On the artefacts platform (`run-remote`)
+
+```
+# "policy_test" can be changed for any of the other tests (e.g policy_drift)
+artefacts run-remote policy_test
+```
 ## Notes
 
 - Use `doit list` to see all available commands.
