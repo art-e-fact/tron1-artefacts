@@ -1,0 +1,190 @@
+[workspace]
+authors = ["shamikarim <ahresgg@gmail.com>"]
+name = "tron_artefacts_ws"
+description = "tron artefacts workspace with Pixi-managed RoboStack (humble/jazzy)"
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+psutil = "==7.0.0"
+python = "*"
+pip = "*"
+
+# tooling
+pytest = "*"
+ruff = "*"
+mypy = "*"
+pyyaml = "*"
+rich = "*"
+
+# build tools
+compilers = "*"
+pkg-config = "*"
+cmake = "*"
+ninja = "*"
+make = "*"
+
+colcon-common-extensions = "*"
+colcon-argcomplete = "*"
+colcon-bash = "*"
+colcon-ros = "*"
+argcomplete = "*"
+
+libmatio = "*"
+urdfdom = "*"
+urdfdom_headers = "*"
+
+[target.linux.dependencies]
+libgl-devel = "*"
+
+[activation.env]
+TERM = "xterm-256color"
+
+[environments]
+default = { features = ["jazzy"] }
+humble  = { features = ["humble"] }
+jazzy   = { features = ["jazzy"] }
+
+[pypi-dependencies]
+colorama = "*"
+artefacts-toolkit = "*"
+artefacts-cli = ">=0.11.0"
+
+[feature.humble]
+channels = ["https://prefix.dev/robostack-humble"]
+
+[feature.humble.dependencies]
+ros-humble-ros-core = "*"
+ros-humble-ros2cli = "*"
+
+ros-humble-rclcpp = "*"       # robot_visualization
+ros-humble-rclpy = "*"        # limxsdk_python
+ros-humble-sensor-msgs = "*"
+ros-humble-std-srvs = "*"
+
+ros-humble-urdf = "*"
+ros-humble-urdfdom = "*"
+ros-humble-urdfdom-headers = "*"
+ros-humble-kdl-parser = "*"
+ros-humble-xacro = "*"
+
+ros-humble-hardware-interface = "*"
+ros-humble-controller-manager = "*"
+ros-humble-controller-interface = "*"
+ros-humble-controller-manager-msgs = "*"
+ros-humble-control-msgs = "*"
+ros-humble-control-toolbox = "*"
+ros-humble-ros2-control = "*"
+ros-humble-ros2-controllers = "*"
+
+libignition-gazebo6 = "*"
+libignition-transport11 = "*"
+libignition-msgs8 = "*"
+
+ros-humble-ros-ign = "*"
+ros-humble-gz-ros2-control = "*"
+
+ros-humble-rviz2 = "*"
+ros-humble-rqt-gui = "*"
+ros-humble-plotjuggler-ros = "*"
+
+ros-humble-rmw-cyclonedds-cpp = "*"
+ros-humble-rmw-fastrtps-cpp = "*"
+ros-humble-rosbag2 = "*"
+ros-humble-rosbag2-storage-mcap = "*"
+
+[feature.humble.activation]
+scripts = [
+"install-humble/setup.bash",
+]
+
+[feature.humble.activation.env]
+RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
+ROBOT_TYPE = "PF_TRON1A"
+RL_TYPE="isaacgym"
+
+[feature.humble.tasks]
+pip_deps = "python -m pip install -r requirements.txt"
+
+build = """
+colcon build --continue-on-error --symlink-install \
+  --cmake-args -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DPython_FIND_VIRTUALENV=ONLY -DPython3_FIND_VIRTUALENV=ONLY \
+  --base-paths ./src \
+  --build-base ./build-humble \
+  --install-base ./install-humble
+"""
+clean = "rm -rf ./build-humble ./install-humble ./log"
+test_ros = "colcon test --base-paths ./src --build-base ./build-humble && colcon test-result --verbose"
+
+[feature.jazzy]
+channels = ["https://prefix.dev/robostack-jazzy"]
+
+[feature.jazzy.dependencies]
+ros-jazzy-ros-core = "*"
+ros-jazzy-ros2cli = "*"
+
+ros-jazzy-rclcpp = "*"
+ros-jazzy-rclpy = "*"
+ros-jazzy-sensor-msgs = "*"
+ros-jazzy-std-srvs = "*"
+
+ros-jazzy-urdf = "*"
+ros-jazzy-urdfdom = "*"
+ros-jazzy-urdfdom-headers = "*"
+ros-jazzy-kdl-parser = "*"
+ros-jazzy-xacro = "*"
+
+ros-jazzy-hardware-interface = "*"
+ros-jazzy-controller-manager = "*"
+ros-jazzy-controller-interface = "*"
+ros-jazzy-controller-manager-msgs = "*"
+ros-jazzy-control-msgs = "*"
+ros-jazzy-control-toolbox = "*"
+ros-jazzy-ros2-control = "*"
+ros-jazzy-ros2-controllers = "*"
+
+libgz-sim8 = "*"
+libgz-transport13 = "*"
+libgz-msgs10 = "*"
+gz-sim8 = "*"
+gz-launch7 = "*"
+
+ros-jazzy-ros-gz = "*"
+ros-jazzy-ros-gz-sim = "*"
+ros-jazzy-ros-gz-bridge = "*"
+ros-jazzy-gz-ros2-control = "*"
+
+ros-jazzy-rviz2 = "*"
+ros-jazzy-rqt-gui = "*"
+ros-jazzy-plotjuggler-ros = "*"
+
+ros-jazzy-rmw-cyclonedds-cpp = "*"
+ros-jazzy-rmw-fastrtps-cpp = "*"
+ros-jazzy-rmw-zenoh-cpp = "*"
+
+ros-jazzy-rosbag2 = "*"
+ros-jazzy-rosbag2-storage-mcap = "*"
+
+[feature.jazzy.activation]
+scripts = [
+"install-jazzy/setup.bash",
+]
+
+[feature.jazzy.activation.env]
+RMW_IMPLEMENTATION = "rmw_cyclonedds_cpp"
+ROBOT_TYPE = "PF_TRON1A"
+RL_TYPE="isaacgym"
+
+[feature.jazzy.tasks]
+pip_deps = "python -m pip install -r requirements.txt"
+
+build = """
+colcon build --continue-on-error --symlink-install \
+  --cmake-args -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DPython_FIND_VIRTUALENV=ONLY -DPython3_FIND_VIRTUALENV=ONLY \
+  --base-paths ./src \
+  --build-base ./build-jazzy \
+  --install-base ./install-jazzy
+"""
+clean = "rm -rf ./build-jazzy ./install-jazzy ./log"
