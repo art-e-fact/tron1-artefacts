@@ -78,6 +78,31 @@ source /opt/ros/$ROS_DISTRO/setup.bash
 colcon build --symlink-install
 ```
 
+#### Alternative Installation Flow with `doit`
+
+_A `doit` configuration file is provided in this repository as an alternative setup flow. See `dodo.py` and `doit_config.py` for details. See below for commands:_
+
+```
+# System Dependencies
+sudo apt install python3-pip python3-doit git
+
+# Installs dependencies, creates virtual environment, sets up ROS2 packages
+doit setup
+# Builds all packages in the workspace using colcon
+doit build
+```
+Other commands:
+```
+# Pulls, fetches, and updates all repositories
+doit download
+# If you want to do a full rebuild cycle:
+doit clean
+doit setup
+doit build
+```
+
+The `doit` configuration will be removed in a future release.
+
 ---
 
 ##  3. Usage
