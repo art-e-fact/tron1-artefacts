@@ -36,4 +36,5 @@ RUN rm -rf /var/lib/apt/lists/*
 RUN source /opt/ros/jazzy/setup.bash && \
     MAKEFLAGS="-j1 -l1" colcon build --symlink-install --executor sequential
 
+ENV DISPLAY=$DISPLAY
 CMD source /ws/install/setup.bash && artefacts run $ARTEFACTS_JOB_NAME
