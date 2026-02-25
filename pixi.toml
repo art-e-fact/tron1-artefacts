@@ -1,6 +1,6 @@
 [workspace]
 authors = ["shamikarim <ahresgg@gmail.com>"]
-name = "tron_artefacts_ws"
+name = "tron1_artefacts"
 description = "tron artefacts workspace with Pixi-managed RoboStack (humble/jazzy)"
 channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64"]
