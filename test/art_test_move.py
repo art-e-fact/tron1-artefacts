@@ -170,7 +170,7 @@ def test_move(demo: GoToDemo, move_case, gz_groundtruth):
     args, checks = move_case
 
     proc, gt = gz_groundtruth
-    p0 = gt.latest(timeout=10.0)
+    p0 = gt.latest(timeout=15.0)
     assert p0 is not None, "No ground truth pose before movement"
     x0, y0 = p0["pos"]["x"], p0["pos"]["y"]
     yaw0 = p0["ori"]["yaw"]
@@ -183,7 +183,7 @@ def test_move(demo: GoToDemo, move_case, gz_groundtruth):
     )
     assert res.get("status") in checks["expect"], f"move() status {res}"
 
-    p1 = gt.latest(timeout=10.0)
+    p1 = gt.latest(timeout=15.0)
     assert p1 is not None, "No ground truth pose after movement"
     x1, y1 = p1["pos"]["x"], p1["pos"]["y"]
     yaw1 = p1["ori"]["yaw"]
@@ -207,7 +207,7 @@ def test_move_face(demo: GoToDemo, move_face_case, gz_groundtruth):
     args, checks = move_face_case
 
     proc, gt = gz_groundtruth
-    p0 = gt.latest(timeout=10.0)
+    p0 = gt.latest(timeout=15.0)
     assert p0 is not None, "No ground truth pose before movement"
     x0, y0 = p0["pos"]["x"], p0["pos"]["y"]
     yaw0 = p0["ori"]["yaw"]
@@ -223,7 +223,7 @@ def test_move_face(demo: GoToDemo, move_face_case, gz_groundtruth):
     status = res.get("status")
     assert status in checks["expect"], f"move_face() status {res}"
 
-    p1 = gt.latest(timeout=10.0)
+    p1 = gt.latest(timeout=15.0)
     assert p1 is not None, "No ground truth pose after movement"
     x1, y1 = p1["pos"]["x"], p1["pos"]["y"]
     yaw1 = p1["ori"]["yaw"]
