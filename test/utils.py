@@ -227,13 +227,14 @@ def pointfoot(test_report_dir):
     report_abs = test_report_dir
     stdout_file = open(f"{report_abs}/sim_stdout.txt", "wb")
     stderr_file = open(f"{report_abs}/sim_stderr.txt", "wb")
+    server_arg = "server:=false" if os.environ.get("DISPLAY") else "server:=true"
     p = subprocess.Popen(
         [
             "ros2",
             "launch",
             "pointfoot_gazebo",
             "gazebo.launch.py",
-            "server:=true",
+            server_arg,
             "world:=debug",
         ],
         stdout=stdout_file,
