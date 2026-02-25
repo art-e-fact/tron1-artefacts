@@ -6,116 +6,134 @@ A demo project using the **Limx Tron1 Robot** with **Artefacts**, **ROS 2**, and
 
 ## Overview
 
-This workspace serves as a **unified installer** for the Tron1 simulation and development environment.
-It automates everything, from dependency installation and virtual environment setup, to pulling repositories and building the entire ROS 2 workspace, using a single command interface powered by [`doit`](https://pydoit.org/).
-It supports both **ROS 2 Humble** and **ROS 2 Jazzy**, automatically detecting your installed distribution and configuring everything accordingly:
+This workspace provides a Tron1 simulation and development environment using a standard ROS 2 workflow.
 
-- **Humble**: Installs and configures **Ignition Fortress**
-- **Jazzy**: Installs and configures **Gazebo Harmonic**
+It supports both **ROS 2 Humble** (Ubuntu 22.04) and **ROS 2 Jazzy** (Ubuntu 24.04):
 
-This allows the same installer to seamlessly handle both ecosystems with no manual changes required.
-
+- **Humble**: Uses **Ignition Fortress**
+- **Jazzy**: Uses **Gazebo Harmonic**
 
 ---
 
-## 1. Set Up the Development Environment
+## 1. Prerequisites
 
-### Install ROS 2 Jazzy or Humble
-For installation, please follow the official guides below and select **`ros-{ROS_DISTRO}-desktop`**:
+### Install ROS 2
 
-[ROS 2 Jazzy Installation on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
-[ROS 2 Humble Installation on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+Follow the official installation guide for your Ubuntu version:
 
-### Install fundamental dependencies
+- [ROS 2 Jazzy on Ubuntu 24.04](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)
+- [ROS 2 Humble on Ubuntu 22.04](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+
+Install the `ros-{ROS_DISTRO}-desktop` package.
+
+### Install tools
+
 ```bash
-sudo apt-get update
-sudo apt-get upgrade
+sudo apt update
+sudo apt install python3-pip python3-vcstool python3-colcon-common-extensions python3-rosdep git
+```
+
+---
+
+## 2. Setup
+
+### Clone this repository
+
+```bash
+git clone https://github.com/art-e-fact/tron1-artefacts.git
+cd tron1-artefacts
+```
+
+### Import dependencies
+
+```bash
+# For Jazzy:
+mkdir src && vcs import src < jazzy.repos
+# For Humble:
+mkdir src && vcs import src < humble.repos
+```
+
+### Create Python virtual environment
+
+```bash
+python3 -m venv --system-site-packages venv
+source venv/bin/activate
+pip install --upgrade pip && pip install -r requirements.txt
+```
+
+### Install ROS dependencies
+(Replace `.bash` with the shell you are using (e.g. `.zsh`))
+```bash
+source /opt/ros/$ROS_DISTRO/setup.bash
+sudo rosdep init  # Only required when using rosdep for the first time
+rosdep update
+rosdep install --from-paths src --ignore-src -y
+```
+
+### Build
+(Replace `.bash` with the shell you are using (e.g. `.zsh`))
+```bash
+source venv/bin/activate
+source /opt/ros/$ROS_DISTRO/setup.bash
+colcon build --symlink-install
+```
+
+#### Alternative Installation Flow with `doit`
+
+_A `doit` configuration file is provided in this repository as an alternative setup flow. See `dodo.py` and `doit_config.py` for details. See below for commands:_
+
+```
+# System Dependencies
 sudo apt install python3-pip python3-doit git
-```
 
-###  Clone the repository (preferably into ~/tron_artefacts_ws)
-```bash
-git clone https://github.com/art-e-fact/tron1-artefacts.git ~/tron_artefacts_ws
-cd ~/tron_artefacts_ws
-doit tabcompletion > bash_completion_doit.bash
-source bash_completion_doit.bash
-```
-
----
-
-## 2. Using the Unified Installer
-
-Once ROS 2 and system prerequisites are installed, this workspace manages everything else through `doit` tasks.
-
-### Initial setup
-```bash
-cd ~/tron_artefacts_ws
+# Installs dependencies, creates virtual environment, sets up ROS2 packages
 doit setup
-```
-> Installs dependencies, creates the virtual environment, and sets up ROS 2 packages.
-
-
-### Build the workspace
-```bash
-cd ~/tron_artefacts_ws
+# Builds all packages in the workspace using colcon
 doit build
 ```
-> Builds all packages in the workspace using `colcon`.
-
-
-### Update repositories
-```bash
-cd ~/tron_artefacts_ws
-doit download
+Other commands:
 ```
-> Pulls, fetches, and updates all repositories.
-
-
-### Full rebuild cycle
-```bash
-cd ~/tron_artefacts_ws
+# Pulls, fetches, and updates all repositories
+doit download
+# If you want to do a full rebuild cycle:
 doit clean
 doit setup
 doit build
 ```
-> Refreshes repositories and rebuilds everything from scratch.
+
+The `doit` configuration will be removed in a future release.
 
 ---
 
 ##  3. Usage
 
-- Select robot type
-  - Taking PF_TRON1A (the only one compatible with Artefacts now) as an example, set the robot model type:
+* You will need three sessions to run a full simulation: 1. The RL Controller, 2. The simulation, and 3. The custom controller
 
-    ```bash
-    echo 'export ROBOT_TYPE=PF_TRON1A' >> ~/.bashrc && source ~/.bashrc
-    ```
-
-Before running anything, do not forget to source your virtual environment and ROS installation.
-
-- Run the RL controller: Do this before the simulation, if you want the robot to start walking, or else it will fall:
-
-  - Select the trained policy: Set the RL_TYPE environmental variable to isaacgym or isaaclab:
-
-    ```bash
-    export RL_TYPE=isaacgym
-    source ~/tron_artefacts_ws/venv/bin/activate
-    python3 ~/tron_artefacts_ws/src/rl-deploy-python/main.py
-    ```
-
-- Run the simulation: You can run the server (no GUI) instead by passing server:=true param:
-
+1. Run the RL Controller:  Do this before the simulation, if you want the robot to start walking, or else it will fall:
   ```bash
-  source ~/tron_artefacts_ws/install/setup.bash
-  ros2 launch pointfoot_gazebo gazebo.launch.py server:=false
+  export ROBOT_TYPE=PF_TRON1A # Set the robot model type (only PF_TRON1A compatible with artefacts)
+  export RL_TYPE=isaacgym # or isaaclab
+  source venv/bin/activate
+  python3 src/rl-deploy-python/main.py
   ```
 
-- Run the custom controller to move the robot:
+2. Run the Simulation
+  ```bash
+  export ROBOT_TYPE=PF_TRON1A
+  source venv/bin/activate
+  source install/setup.bash # or e.g. .zsh
+  ros2 launch pointfoot_gazebo empty_world.launch.py server:=false # or true to run headlessly 
+  ```
+
+3. Run the custom controller to move the robot:
 
   ```bash
-  source ~/tron_artefacts_ws/venv/bin/activate
-  python3 ~/tron_artefacts_ws/src/limxsdk_python/limxsdk_python/api/goto.py
+  export ROBOT_TYPE=PF_TRON1A
+  source venv/bin/activate
+  source install/setup.bash
+  python3 src/limxsdk_python/limxsdk_python/api/goto.py
   ```
+
 ## 4. Testing
 
 ### Local
@@ -124,15 +142,15 @@ NOTE: Do not manually launch any processes before running the test.
 The test script will automatically collect and launch all necessary components.
 Please ensure that any other active processes (simulators or controllers) are fully terminated beforehand.
 
+
 - Test with Artefacts:
-
-  Before running any experiments, activate the virtual environment and source the workspace:
-
+  
+  Setup the environment:
   ```bash
-  source ~/tron_artefacts_ws/venv/bin/activate
-  source ~/tron_artefacts_ws/install/setup.bash
+  source venv/bin/activate
+  source install/setup.bash
   ```
-
+  
   - Relative motion execution test:
 
     ```bash
@@ -154,9 +172,9 @@ Please ensure that any other active processes (simulators or controllers) are fu
 - Test with Pytest:
 
   ```bash
-  source ~/tron_artefacts_ws/venv/bin/activate
-  source ~/tron_artefacts_ws/install/setup.bash
-  python3 -m pytest ~/tron_artefacts_ws/test/test_move.py -v -x
+  source venv/bin/activate
+  source install/setup.bash
+  python3 -m pytest test/test_move.py -v -x
   ```
 
 ### Containerized (Docker)
@@ -180,4 +198,6 @@ artefacts run-remote policy_test
 ```
 ## Notes
 
-- Use `doit list` to see all available commands.
+- Use `vcs status src` to check repo status across all dependencies.
+- Use `vcs pull src` to update dependent repos
+- `rm -rf build install log` followed by `colcon build --symlink-install` for a clean rebuild
