@@ -15,27 +15,27 @@ ros2: Literal["humble", "jazzy"] = {  # type: ignore
 
 REPO_SPECS = {
     "limxsdk_python": {
-        "url": "git@github.com:art-e-fact/tron1-artefacts-pythonsdk.git",
+        "url": "https://github.com/art-e-fact/tron1-artefacts-pythonsdk.git",
         "versions": {"jazzy": "main", "humble": "main"},
     },
     "robot-description": {
-        "url": "git@github.com:art-e-fact/tron1-artefacts-description.git",
+        "url": "https://github.com/art-e-fact/tron1-artefacts-description.git",
         "versions": {"jazzy": "main", "humble": "humble"},
     },
     "robot-visualization": {
-        "url": "git@github.com:limxdynamics/robot-visualization.git",
+        "url": "https://github.com/limxdynamics/robot-visualization.git",
         "versions": {"jazzy": "master", "humble": "master"},
     },
     "robot-gazebo": {
-        "url": "git@github.com:art-e-fact/tron1-artefacts-sim.git",
+        "url": "https://github.com/art-e-fact/tron1-artefacts-sim.git",
         "versions": {"jazzy": "main", "humble": "humble"},
     },
     "rl-deploy-python": {
-        "url": "git@github.com:art-e-fact/tron1-rl-deploy-artefacts.git",
+        "url": "https://github.com/art-e-fact/tron1-rl-deploy-artefacts.git",
         "versions": {"jazzy": "main", "humble": "main"},
     },
     "robot-joystick": {
-        "url": "git@github.com:limxdynamics/robot-joystick.git",
+        "url": "https://github.com/limxdynamics/robot-joystick.git",
         "versions": {"jazzy": "main", "humble": "main"},
     },
 }
